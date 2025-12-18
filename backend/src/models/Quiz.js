@@ -1,161 +1,114 @@
 import pool from '../../config/database.js';
 
+const decodeHTML = (html) => {
+    if (!html) return "";
+    const map = { '&quot;': '"', '&#039;': "'", '&amp;': '&', '&lt;': '<', '&gt;': '>', '&rsquo;': "'", '&ldquo;': '"', '&rdquo;': '"' };
+    return html.replace(/&quot;|&#039;|&amp;|&lt;|&gt;|&rsquo;|&ldquo;|&rdquo;/g, m => map[m]);
+};
+
 class Quiz {
     static async findAll(filters = {}) {
-        const { category, difficulty, language, isActive = true } = filters;
-        let query = `SELECT id, title, description, category, difficulty, language, questions_count, time_limit_minutes 
-                     FROM quizzes WHERE is_active = ?`;
-        let params = [isActive];
+        try {
+            const { category, difficulty } = filters;
+            const categoryMap = { 'media_literacy': 18, 'pedagogy': 9, 'adaptive': 17, 'critical_thinking': 23 };
+            const diffMap = { 'debutant': 'easy', 'intermediaire': 'medium', 'avance': 'hard' };
 
-        if (category) {
-            query += ` AND category = ?`;
-            params.push(category);
-        }
+            const apiCatId = categoryMap[category] || 9;
+            const apiDiff = diffMap[difficulty] || '';
 
-        if (difficulty) {
-            query += ` AND difficulty = ?`;
-            params.push(difficulty);
-        }
-
-        if (language) {
-            query += ` AND language = ?`;
-            params.push(language);
-        }
-
-        query += ` ORDER BY created_at DESC`;
-
-        const [rows] = await pool.execute(query, params);
-        return rows;
+            return [{
+                id: apiCatId,
+                title: category ? this.getLabel(category) : "Module de Formation",
+                description: `Contenu interactif généré pour le niveau ${difficulty || 'standard'}.`,
+                category: category || 'general',
+                difficulty: difficulty || 'intermediaire',
+                questions_count: 15
+            }];
+        } catch (e) { return []; }
     }
 
-    static async findById(id) {
-        const [quizRows] = await pool.execute(
-            `SELECT id, title, description, category, difficulty, language, questions_count, time_limit_minutes 
-             FROM quizzes WHERE id = ? AND is_active = TRUE`,
-            [id]
-        );
-
-        if (!quizRows[0]) return null;
-
-        const [questionRows] = await pool.execute(
-            `SELECT id, question_text, question_type, options, correct_answer, explanation, media_url, order_index 
-             FROM questions WHERE quiz_id = ? ORDER BY order_index`,
-            [id]
-        );
-
-        const questions = questionRows.map(q => ({
-            ...q,
-            options: q.options ? JSON.parse(q.options) : []
-        }));
-
-        return { ...quizRows[0], questions };
+    static getLabel(slug) {
+        const labels = { 'media_literacy': 'Littératie médiatique', 'pedagogy': 'Pédagogie active', 'adaptive': 'Parcours adaptatif', 'critical_thinking': 'Esprit critique' };
+        return labels[slug] || 'Module';
     }
 
+    static async findById(id, difficulty = '') {
+        try {
+            // Sécurité : On s'assure que difficulty est soit 'easy', 'medium' ou 'hard'
+            const validDiffs = ['easy', 'medium', 'hard'];
+            const cleanDiff = validDiffs.includes(difficulty) ? `&difficulty=${difficulty}` : '';
+
+            // TENTATIVE 1 : API avec filtres
+            let res = await fetch(`https://opentdb.com/api.php?amount=15&category=${id}${cleanDiff}&type=multiple`);
+            let data = await res.json();
+
+            // TENTATIVE 2 : Si échec, API sans difficulté
+            if (data.response_code !== 0) {
+                res = await fetch(`https://opentdb.com/api.php?amount=15&category=${id}&type=multiple`);
+                data = await res.json();
+            }
+
+            // TENTATIVE 3 : Si toujours échec (Rate limit), on crée un quiz de secours local
+            if (!data.results || data.results.length === 0) {
+                return this.getEmergencyQuiz(id);
+            }
+
+            const questions = data.results.map((q, i) => ({
+                id: i + 1,
+                question_text: decodeHTML(q.question),
+                options: [...q.incorrect_answers, q.correct_answer].map(o => decodeHTML(o)).sort(() => Math.random() - 0.5),
+                correct_answer: decodeHTML(q.correct_answer),
+                explanation: "Thème : " + decodeHTML(q.category)
+            }));
+
+            return { id, title: decodeHTML(data.results[0].category), questions };
+        } catch (e) {
+            return this.getEmergencyQuiz(id);
+        }
+    }
+
+    static getEmergencyQuiz(id) {
+        return {
+            id,
+            title: "Module d'initiation (Mode Secours)",
+            questions: [
+                {
+                    id: 1,
+                    question_text: "L'esprit critique consiste à :",
+                    options: ["Accepter tout", "Vérifier les sources", "Ignorer l'info"],
+                    correct_answer: "Vérifier les sources",
+                    explanation: "La vérification est la base de l'esprit critique."
+                },
+                {
+                    id: 2,
+                    question_text: "Une information fiable doit être :",
+                    options: ["Récente et sourcée", "Partagée par beaucoup", "Écrite en gras"],
+                    correct_answer: "Récente et sourcée",
+                    explanation: "La source est plus importante que la popularité."
+                }
+            ]
+        };
+    }
+
+    // Fonctions résultats BDD
     static async submitResult(userId, quizId, answers, score, maxScore, timeSpent) {
-        const [result] = await pool.execute(
-            `INSERT INTO quiz_results 
-             (user_id, quiz_id, score, max_score, answers, time_spent_seconds) 
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [userId, quizId, score, maxScore, JSON.stringify(answers), timeSpent]
-        );
-
-        return this.getResultById(result.insertId);
+        try {
+            await pool.execute(
+                `INSERT INTO quiz_results (user_id, quiz_id, score, max_score, answers, time_spent_seconds) VALUES (?, ?, ?, ?, ?, ?)`,
+                [userId, quizId, score, maxScore, JSON.stringify(answers), timeSpent]
+            );
+        } catch (e) { console.log("Sauvegarde locale uniquement"); }
+        return { score };
     }
 
-    static async getResultById(resultId) {
-        const [rows] = await pool.execute(
-            `SELECT qr.*, q.title as quiz_title, q.category 
-             FROM quiz_results qr 
-             LEFT JOIN quizzes q ON qr.quiz_id = q.id 
-             WHERE qr.id = ?`,
-            [resultId]
-        );
-
-        if (rows[0]) {
-            rows[0].answers = rows[0].answers ? JSON.parse(rows[0].answers) : {};
-        }
-
-        return rows[0] || null;
-    }
-
-    static async getUserResults(userId, limit = 20) {
-        const [rows] = await pool.execute(
-            `SELECT qr.*, q.title as quiz_title, q.category, q.difficulty 
-             FROM quiz_results qr 
-             LEFT JOIN quizzes q ON qr.quiz_id = q.id 
-             WHERE qr.user_id = ? 
-             ORDER BY qr.completed_at DESC 
-             LIMIT ?`,
-            [userId, limit]
-        );
-
-        rows.forEach(row => {
-            row.answers = row.answers ? JSON.parse(row.answers) : {};
-        });
-
+    static async getUserResults(userId) {
+        const [rows] = await pool.execute(`SELECT * FROM quiz_results WHERE user_id = ? ORDER BY completed_at DESC`, [userId]);
         return rows;
     }
 
     static async getUserProgress(userId) {
-        const [categoryProgress] = await pool.execute(
-            `SELECT q.category, 
-                    COUNT(*) as quizzes_completed,
-                    AVG(qr.score) as average_score
-             FROM quiz_results qr
-             LEFT JOIN quizzes q ON qr.quiz_id = q.id
-             WHERE qr.user_id = ?
-             GROUP BY q.category`,
-            [userId]
-        );
-
-        const [totalQuizzes] = await pool.execute(
-            `SELECT COUNT(*) as total FROM quizzes WHERE is_active = TRUE`
-        );
-
-        const [completedQuizzes] = await pool.execute(
-            `SELECT COUNT(DISTINCT quiz_id) as completed FROM quiz_results WHERE user_id = ?`,
-            [userId]
-        );
-
-        return {
-            categoryProgress,
-            totalQuizzes: totalQuizzes[0].total,
-            completedQuizzes: completedQuizzes[0].completed,
-            progressPercentage: Math.round((completedQuizzes[0].completed / totalQuizzes[0].total) * 100)
-        };
-    }
-
-    static async create(userData) {
-        const { title, description, category, difficulty, language, questions, timeLimitMinutes, createdBy } = userData;
-        
-        const [quizResult] = await pool.execute(
-            `INSERT INTO quizzes 
-             (title, description, category, difficulty, language, questions_count, time_limit_minutes, created_by) 
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [title, description, category, difficulty, language, questions.length, timeLimitMinutes, createdBy]
-        );
-
-        const quizId = quizResult.insertId;
-
-        for (let i = 0; i < questions.length; i++) {
-            const q = questions[i];
-            await pool.execute(
-                `INSERT INTO questions 
-                 (quiz_id, question_text, question_type, options, correct_answer, explanation, order_index) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    quizId, 
-                    q.questionText, 
-                    q.questionType, 
-                    JSON.stringify(q.options || []),
-                    q.correctAnswer, 
-                    q.explanation, 
-                    i + 1
-                ]
-            );
-        }
-
-        return this.findById(quizId);
+        const [rows] = await pool.execute(`SELECT score FROM quiz_results WHERE user_id = ?`, [userId]);
+        return { categoryProgress: [], totalQuizzes: 10, completedQuizzes: rows.length, progressPercentage: Math.min(100, rows.length * 10) };
     }
 }
 

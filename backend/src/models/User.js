@@ -44,11 +44,22 @@ class User {
 
     static async updateProfile(id, updates) {
         const { fullName, bio, country, language, avatarUrl } = updates;
+
+        // ✅ Empêche l’erreur MySQL2 : undefined → null
+        const safe = value => value === undefined ? null : value;
         
         const [result] = await pool.execute(
-            `UPDATE users SET full_name = ?, bio = ?, country = ?, language = ?, avatar_url = ? 
+            `UPDATE users 
+             SET full_name = ?, bio = ?, country = ?, language = ?, avatar_url = ? 
              WHERE id = ?`,
-            [fullName, bio, country, language, avatarUrl, id]
+            [
+                safe(fullName),
+                safe(bio),
+                safe(country),
+                safe(language),
+                safe(avatarUrl),
+                id
+            ]
         );
         
         return result.affectedRows > 0;
