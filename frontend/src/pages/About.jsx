@@ -1,42 +1,46 @@
+// src/pages/About.jsx
 import React from 'react';
 import { ShieldCheck, Target, Users, Globe, Award, Heart } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const About = () => {
+  const { t } = useTranslation();
+
   const objectives = [
     {
       icon: Target,
-      title: 'Lutter contre la désinformation',
-      description: 'Développer des outils pour identifier et signaler les fake news dans les environnements éducatifs.'
+      title: t('about.objectives.disinformation.title'),
+      description: t('about.objectives.disinformation.description')
     },
     {
       icon: ShieldCheck,
-      title: 'Vérifier les sources',
-      description: 'Permettre aux jeunes de vérifier la fiabilité des sources d\'information.'
+      title: t('about.objectives.sources.title'),
+      description: t('about.objectives.sources.description')
     },
     {
       icon: Users,
-      title: 'Renforcer l\'esprit critique',
-      description: 'Former l\'analyse critique des contenus numériques et des réseaux sociaux.'
+      title: t('about.objectives.criticalThinking.title'),
+      description: t('about.objectives.criticalThinking.description')
     },
     {
       icon: Globe,
-      title: 'Promouvoir l\'inclusion',
-      description: 'Solutions multilingues adaptées aux contextes africains et accessibles.'
+      title: t('about.objectives.inclusion.title'),
+      description: t('about.objectives.inclusion.description')
     }
   ];
 
   const values = [
     {
-      title: 'Éducation de qualité',
-      description: 'Aligné avec l\'ODD 4 pour une éducation inclusive et équitable de qualité.'
+      title: t('about.values.qualityEducation.title'),
+      description: t('about.values.qualityEducation.description')
     },
     {
-      title: 'Information fiable',
-      description: 'Contribution à l\'ODD 16 pour des sociétés pacifiques et inclusives.'
+      title: t('about.values.reliableInfo.title'),
+      description: t('about.values.reliableInfo.description')
     },
     {
-      title: 'IA éthique',
-      description: 'Intelligence artificielle responsable et éthique au service de l\'éducation.'
+      title: t('about.values.ethicalAI.title'),
+      description: t('about.values.ethicalAI.description')
     }
   ];
 
@@ -46,11 +50,10 @@ const About = () => {
       <section className="bg-gradient-to-br from-primary-600 to-secondary-700 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            À propos d'Education AI
+            {t('about.hero.title')}
           </h1>
           <p className="text-xl md:text-2xl text-primary-100 max-w-4xl mx-auto">
-            Jeunesse, Intelligence Artificielle et Numérique pour une éducation critique, 
-            inclusive et responsable en Afrique
+            {t('about.hero.subtitle')}
           </p>
         </div>
       </section>
@@ -60,11 +63,10 @@ const About = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Notre Mission
+              {t('about.mission.title')}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Concevoir et développer des solutions numériques innovantes intégrant 
-              l'Intelligence Artificielle pour améliorer la vie éducative à Madagascar et en Afrique.
+              {t('about.mission.subtitle')}
             </p>
           </div>
 
@@ -94,32 +96,26 @@ const About = () => {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <h2 className="text-3xl font-bold text-gray-900 mb-6">
-                Notre Vision
+                {t('about.vision.title')}
               </h2>
               <p className="text-gray-600 mb-6">
-                Former des talents numériques engagés capables de naviguer dans 
-                l'environnement médiatique complexe actuel, de distinguer les 
-                informations fiables des fake news, et de devenir des acteurs 
-                responsables de la diffusion de l'information.
+                {t('about.vision.paragraph1')}
               </p>
               <p className="text-gray-600 mb-6">
-                Nous croyons en un Internet plus sûr, plus éclairé et plus 
-                responsable, où les jeunes africains sont équipés des outils 
-                nécessaires pour comprendre, analyser et contribuer positivement 
-                au débat public.
+                {t('about.vision.paragraph2')}
               </p>
             </div>
             <div className="bg-white p-8 rounded-lg shadow-lg">
               <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                Slogan officiel INSI
+                {t('about.slogan.title')}
               </h3>
               <blockquote className="text-2xl font-medium text-primary-600 italic">
-                "Youth, AI and Digital Innovation for a Smarter Education"
+                {t('about.slogan.quote')}
               </blockquote>
               <div className="mt-6 flex items-center">
                 <Award className="h-6 w-6 text-primary-600 mr-2" />
                 <span className="text-gray-700">
-                  Hackathon INSI - Madagascar
+                  {t('about.slogan.event')}
                 </span>
               </div>
             </div>
@@ -132,10 +128,10 @@ const About = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Nos Valeurs
+              {t('about.values.title')}
             </h2>
             <p className="text-xl text-gray-600">
-            Engagés pour un impact durable et positif
+              {t('about.values.subtitle')}
             </p>
           </div>
 
@@ -160,15 +156,15 @@ const About = () => {
       <section className="py-20 bg-primary-600 text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Rejoignez le mouvement
+            {t('about.cta.title')}
           </h2>
           <p className="text-xl text-primary-100 mb-8">
-            Ensemble, construisons un avenir numérique plus éclairé et responsable pour l'Afrique.
+            {t('about.cta.subtitle')}
           </p>
           <div className="flex items-center justify-center space-x-2">
             <Heart className="h-6 w-6" />
             <span className="text-lg">
-              Fait avec passion pour l'éducation en Afrique
+              {t('about.cta.footer')}
             </span>
           </div>
         </div>

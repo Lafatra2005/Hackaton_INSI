@@ -1,12 +1,15 @@
+// src/components/Header.jsx
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  Menu, 
-  X, 
-  ShieldCheck, 
-  User, 
-  LogOut, 
+import LanguageSwitcher from './LanguageSwitcher';
+import {
+  Menu,
+  X,
+  ShieldCheck,
+  User,
+  LogOut,
   LayoutDashboard,
   Brain,
   BookOpen,
@@ -17,6 +20,7 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, isAuthenticated, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const handleLogout = () => {
     logout();
@@ -25,36 +29,33 @@ const Header = () => {
   };
 
   const navigation = [
-    { name: 'Accueil', href: '/', current: false },
-    { name: 'À propos', href: '/about', current: false },
-    { name: 'Sources Fiables', href: '/trusted-sources', current: false },
+    { name: t('nav.home'), href: '/' },
+    { name: t('nav.about'), href: '/about' },
+    { name: t('nav.trustedSources'), href: '/trusted-sources' },
   ];
 
   const protectedNavigation = [
-    { name: 'Tableau de bord', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Analyse IA', href: '/analysis', icon: Brain },
-    { name: 'Quiz', href: '/quizzes', icon: BookOpen },
+    { name: t('nav.dashboard'), href: '/dashboard', icon: LayoutDashboard },
+    { name: t('nav.aiAnalysis'), href: '/analysis', icon: Brain },
+    { name: t('nav.quizzes'), href: '/quizzes', icon: BookOpen },
   ];
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="flex-shrink-0">
-                <ShieldCheck className="h-8 w-8 text-primary-600" />
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Education AI</h1>
-                <p className="text-xs text-gray-500">Lutter contre la désinformation</p>
-              </div>
-            </Link>
-          </div>
+        {/* LIGNE PRINCIPALE : tout aligné verticalement */}
+        <div className="flex items-center justify-between h-16">
+          {/* GAUCHE : logo + titre */}
+          <Link to="/" className="flex items-center space-x-3">
+            <ShieldCheck className="h-8 w-8 text-primary-600" />
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">{t('header.title')}</h1>
+              <p className="text-xs text-gray-500">{t('header.subtitle')}</p>
+            </div>
+          </Link>
 
-          {/* Navigation Desktop */}
-          <nav className="hidden md:flex items-center space-x-8">
+          {/* CENTRE : navigation desktop */}
+          <nav className="hidden md:flex items-center space-x-6">
             {navigation.map((item) => (
               <Link
                 key={item.name}
@@ -64,7 +65,7 @@ const Header = () => {
                 {item.name}
               </Link>
             ))}
-            
+
             {isAuthenticated && (
               <>
                 <div className="h-4 w-px bg-gray-300" />
@@ -82,8 +83,10 @@ const Header = () => {
             )}
           </nav>
 
-          {/* Actions */}
+          {/* DROITE : langue + profil/menu */}
           <div className="flex items-center space-x-4">
+            <LanguageSwitcher />
+
             {isAuthenticated ? (
               <div className="relative">
                 <button
@@ -93,10 +96,9 @@ const Header = () => {
                   <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center">
                     <User className="h-5 w-5 text-primary-600" />
                   </div>
-                  <span>{user?.fullName || user?.username}</span>
+                  <span className="hidden sm:inline">{user?.fullName || user?.username}</span>
                 </button>
 
-                {/* Dropdown Menu */}
                 {isMenuOpen && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
                     <Link
@@ -106,10 +108,10 @@ const Header = () => {
                     >
                       <div className="flex items-center space-x-2">
                         <User className="h-4 w-4" />
-                        <span>Profil</span>
+                        <span>{t('nav.profile')}</span>
                       </div>
                     </Link>
-                    
+
                     {isAdmin && (
                       <Link
                         to="/admin"
@@ -118,18 +120,18 @@ const Header = () => {
                       >
                         <div className="flex items-center space-x-2">
                           <Award className="h-4 w-4" />
-                          <span>Administration</span>
+                          <span>{t('nav.administration')}</span>
                         </div>
                       </Link>
                     )}
-                    
+
                     <button
                       onClick={handleLogout}
                       className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       <div className="flex items-center space-x-2">
                         <LogOut className="h-4 w-4" />
-                        <span>Déconnexion</span>
+                        <span>{t('nav.logout')}</span>
                       </div>
                     </button>
                   </div>
@@ -141,18 +143,15 @@ const Header = () => {
                   to="/login"
                   className="text-sm font-medium text-gray-700 hover:text-primary-600"
                 >
-                  Connexion
+                  {t('nav.login')}
                 </Link>
-                <Link
-                  to="/register"
-                  className="btn btn-primary"
-                >
-                  S inscrire
+                <Link to="/register" className="btn btn-primary">
+                  {t('nav.register')}
                 </Link>
               </div>
             )}
 
-            {/* Mobile menu button */}
+            {/* Bouton menu mobile */}
             <div className="md:hidden">
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -164,7 +163,7 @@ const Header = () => {
           </div>
         </div>
 
-        {/* Mobile Menu */}
+        {/* MENU MOBILE (facultatif mais propre) */}
         {isMenuOpen && (
           <div className="md:hidden border-t border-gray-200 py-4">
             <div className="flex flex-col space-y-3">
@@ -178,7 +177,7 @@ const Header = () => {
                   {item.name}
                 </Link>
               ))}
-              
+
               {isAuthenticated && (
                 <>
                   <div className="h-px bg-gray-300 my-2" />
@@ -193,7 +192,7 @@ const Header = () => {
                       <span>{item.name}</span>
                     </Link>
                   ))}
-                  
+
                   <div className="h-px bg-gray-300 my-2" />
                   <Link
                     to="/profile"
@@ -201,9 +200,9 @@ const Header = () => {
                     onClick={() => setIsMenuOpen(false)}
                   >
                     <User className="h-5 w-5" />
-                    <span>Profil</span>
+                    <span>{t('nav.profile')}</span>
                   </Link>
-                  
+
                   {isAdmin && (
                     <Link
                       to="/admin"
@@ -211,16 +210,16 @@ const Header = () => {
                       onClick={() => setIsMenuOpen(false)}
                     >
                       <Award className="h-5 w-5" />
-                      <span>Administration</span>
+                      <span>{t('nav.administration')}</span>
                     </Link>
                   )}
-                  
+
                   <button
                     onClick={handleLogout}
                     className="text-base font-medium text-gray-700 hover:text-primary-600 flex items-center space-x-2 text-left"
                   >
                     <LogOut className="h-5 w-5" />
-                    <span>Déconnexion</span>
+                    <span>{t('nav.logout')}</span>
                   </button>
                 </>
               )}

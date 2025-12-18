@@ -1,10 +1,22 @@
+// src/pages/Profile.jsx
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { User, Mail, Globe, Award, Calendar, Edit3, Save, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import {
+  User,
+  Mail,
+  Globe,
+  Award,
+  Calendar,
+  Edit3,
+  Save,
+  X
+} from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
 
 const Profile = () => {
+  const { t } = useTranslation();
   const { user, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -24,9 +36,9 @@ const Profile = () => {
   const onSubmit = async (data) => {
     setIsLoading(true);
     const result = await updateProfile(data);
-    
+
     if (result.success) {
-      toast.success('Profil mis à jour avec succès !');
+      toast.success(t('profile.success.update'));
       setIsEditing(false);
     } else {
       toast.error(result.error);
@@ -46,10 +58,10 @@ const Profile = () => {
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Mon Profil
+          {t('profile.title')}
         </h1>
         <p className="text-gray-600">
-          Gérez vos informations personnelles et préférences
+          {t('profile.subtitle')}
         </p>
       </div>
 
@@ -65,7 +77,7 @@ const Profile = () => {
                 <h2 className="text-xl font-semibold text-gray-900">
                   {user?.fullName || user?.username}
                 </h2>
-                <p className="text-gray-600">{user?.role}</p>
+                <p className="text-gray-600">{t(`profile.roles.${user?.role}`)}</p>
               </div>
 
               <div className="space-y-3 text-left">
@@ -81,12 +93,11 @@ const Profile = () => {
                 )}
                 <div className="flex items-center text-sm text-gray-600">
                   <Calendar className="h-4 w-4 mr-2" />
-                  Inscrit le {new Date(user?.createdAt).toLocaleDateString('fr-FR')}
+                  {t('profile.registeredOn')} {new Date(user?.createdAt).toLocaleDateString()}
                 </div>
                 <div className="flex items-center text-sm text-gray-600">
                   <Award className="h-4 w-4 mr-2" />
-                  {user?.role === 'admin' ? 'Administrateur' : 
-                   user?.role === 'enseignant' ? 'Enseignant' : 'Étudiant'}
+                  {t(`profile.roles.${user?.role}`)}
                 </div>
               </div>
 
@@ -96,7 +107,7 @@ const Profile = () => {
                   className="w-full mt-6 btn btn-outline flex items-center justify-center space-x-2"
                 >
                   <Edit3 className="h-4 w-4" />
-                  <span>Modifier le profil</span>
+                  <span>{t('profile.editButton')}</span>
                 </button>
               )}
             </div>
@@ -106,23 +117,23 @@ const Profile = () => {
           <div className="card mt-6">
             <div className="card-body">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Statistiques
+                {t('profile.stats.title')}
               </h3>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Analyses réalisées</span>
+                  <span className="text-sm text-gray-600">{t('profile.stats.analyses')}</span>
                   <span className="text-sm font-medium text-gray-900">0</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Quiz complétés</span>
+                  <span className="text-sm text-gray-600">{t('profile.stats.quizzes')}</span>
                   <span className="text-sm font-medium text-gray-900">0</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Score moyen</span>
+                  <span className="text-sm text-gray-600">{t('profile.stats.averageScore')}</span>
                   <span className="text-sm font-medium text-gray-900">0%</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">Jours de suite</span>
+                  <span className="text-sm text-gray-600">{t('profile.stats.streak')}</span>
                   <span className="text-sm font-medium text-gray-900">0</span>
                 </div>
               </div>
@@ -136,7 +147,7 @@ const Profile = () => {
             <div className="card-body">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  Informations personnelles
+                  {t('profile.personalInfo.title')}
                 </h3>
                 {isEditing && (
                   <div className="flex space-x-2">
@@ -145,7 +156,7 @@ const Profile = () => {
                       className="btn btn-ghost flex items-center space-x-2"
                     >
                       <X className="h-4 w-4" />
-                      <span>Annuler</span>
+                      <span>{t('profile.cancel')}</span>
                     </button>
                   </div>
                 )}
@@ -154,23 +165,35 @@ const Profile = () => {
               {!isEditing ? (
                 <div className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Nom complet</label>
-                    <p className="mt-1 text-gray-900">{user?.fullName || 'Non renseigné'}</p>
+                    <label className="text-sm font-medium text-gray-700">
+                      {t('profile.personalInfo.fullName')}
+                    </label>
+                    <p className="mt-1 text-gray-900">
+                      {user?.fullName || t('profile.personalInfo.notProvided')}
+                    </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Pays</label>
-                    <p className="mt-1 text-gray-900">{user?.country || 'Non renseigné'}</p>
+                    <label className="text-sm font-medium text-gray-700">
+                      {t('profile.personalInfo.country')}
+                    </label>
+                    <p className="mt-1 text-gray-900">
+                      {user?.country || t('profile.personalInfo.notProvided')}
+                    </p>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-gray-700">Biographie</label>
-                    <p className="mt-1 text-gray-900">{user?.bio || 'Non renseignée'}</p>
+                    <label className="text-sm font-medium text-gray-700">
+                      {t('profile.personalInfo.bio')}
+                    </label>
+                    <p className="mt-1 text-gray-900">
+                      {user?.bio || t('profile.personalInfo.notProvided')}
+                    </p>
                   </div>
                 </div>
               ) : (
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                   <div>
                     <label htmlFor="fullName" className="label">
-                      Nom complet
+                      {t('profile.personalInfo.fullName')}
                     </label>
                     <input
                       id="fullName"
@@ -178,11 +201,11 @@ const Profile = () => {
                       {...register('fullName', {
                         maxLength: {
                           value: 100,
-                          message: 'Le nom ne doit pas dépasser 100 caractères',
+                          message: t('profile.errors.fullNameTooLong'),
                         },
                       })}
                       className="input"
-                      placeholder="Votre nom complet"
+                      placeholder={t('profile.personalInfo.fullNamePlaceholder')}
                     />
                     {errors.fullName && (
                       <p className="mt-1 text-sm text-red-600">
@@ -193,14 +216,14 @@ const Profile = () => {
 
                   <div>
                     <label htmlFor="country" className="label">
-                      Pays
+                      {t('profile.personalInfo.country')}
                     </label>
                     <select
                       id="country"
                       {...register('country')}
                       className="select"
                     >
-                      <option value="">Sélectionnez votre pays</option>
+                      <option value="">{t('profile.personalInfo.selectCountry')}</option>
                       {countries.map((country) => (
                         <option key={country} value={country}>
                           {country}
@@ -211,7 +234,7 @@ const Profile = () => {
 
                   <div>
                     <label htmlFor="bio" className="label">
-                      Biographie
+                      {t('profile.personalInfo.bio')}
                     </label>
                     <textarea
                       id="bio"
@@ -219,11 +242,11 @@ const Profile = () => {
                       {...register('bio', {
                         maxLength: {
                           value: 500,
-                          message: 'La biographie ne doit pas dépasser 500 caractères',
+                          message: t('profile.errors.bioTooLong'),
                         },
                       })}
                       className="textarea"
-                      placeholder="Parlez-nous de vous..."
+                      placeholder={t('profile.personalInfo.bioPlaceholder')}
                     />
                     {errors.bio && (
                       <p className="mt-1 text-sm text-red-600">
@@ -238,7 +261,7 @@ const Profile = () => {
                       onClick={() => setIsEditing(false)}
                       className="btn btn-ghost"
                     >
-                      Annuler
+                      {t('profile.cancel')}
                     </button>
                     <button
                       type="submit"
@@ -250,7 +273,7 @@ const Profile = () => {
                       ) : (
                         <Save className="h-4 w-4" />
                       )}
-                      <span>{isLoading ? 'Enregistrement...' : 'Enregistrer'}</span>
+                      <span>{isLoading ? t('profile.saving') : t('profile.save')}</span>
                     </button>
                   </div>
                 </form>
@@ -262,37 +285,37 @@ const Profile = () => {
           <div className="card mt-6">
             <div className="card-body">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                Paramètres du compte
+                {t('profile.accountSettings.title')}
               </h3>
               
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
-                    <h4 className="font-medium text-gray-900">Langue</h4>
-                    <p className="text-sm text-gray-600">Français</p>
+                    <h4 className="font-medium text-gray-900">{t('profile.accountSettings.language')}</h4>
+                    <p className="text-sm text-gray-600">{t('profile.accountSettings.languageValue')}</p>
                   </div>
                   <button className="btn btn-ghost text-sm">
-                    Modifier
+                    {t('profile.accountSettings.modify')}
                   </button>
                 </div>
                 
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
-                    <h4 className="font-medium text-gray-900">Notifications</h4>
-                    <p className="text-sm text-gray-600">Activées</p>
+                    <h4 className="font-medium text-gray-900">{t('profile.accountSettings.notifications')}</h4>
+                    <p className="text-sm text-gray-600">{t('profile.accountSettings.notificationsValue')}</p>
                   </div>
                   <button className="btn btn-ghost text-sm">
-                    Modifier
+                    {t('profile.accountSettings.modify')}
                   </button>
                 </div>
                 
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                   <div>
-                    <h4 className="font-medium text-gray-900">Confidentialité</h4>
-                    <p className="text-sm text-gray-600">Paramètres de confidentialité</p>
+                    <h4 className="font-medium text-gray-900">{t('profile.accountSettings.privacy')}</h4>
+                    <p className="text-sm text-gray-600">{t('profile.accountSettings.privacyValue')}</p>
                   </div>
                   <button className="btn btn-ghost text-sm">
-                    Modifier
+                    {t('profile.accountSettings.modify')}
                   </button>
                 </div>
               </div>

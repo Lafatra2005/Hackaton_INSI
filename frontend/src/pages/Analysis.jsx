@@ -1,25 +1,28 @@
+// src/pages/Analysis.jsx
 import React, { useState, useRef } from 'react';
-import { 
-  Brain, 
-  Link2, 
-  FileText, 
-  CheckCircle, 
-  AlertTriangle, 
+import { useTranslation } from 'react-i18next';
+import {
+  Brain,
+  Link2,
+  FileText,
+  CheckCircle,
+  AlertTriangle,
   XCircle,
   Clock,
   ShieldCheck,
   TrendingUp,
   Eye,
   EyeOff,
-  Mic, // Icône Audio
-  Video, // Icône Vidéo
-  Upload, // Icône Upload
+  Mic,
+  Video,
+  Upload,
   X
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { analysisAPI } from '../services/api';
 
 const Analysis = () => {
+  const { t } = useTranslation();
   const [contentType, setContentType] = useState('text');
   const [contentText, setContentText] = useState('');
   const [contentUrl, setContentUrl] = useState('');
@@ -33,8 +36,8 @@ const Analysis = () => {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (file.size > 50 * 1024 * 1024) { // Limite de 50MB par exemple
-        toast.error('Le fichier est trop volumineux (max 50Mo)');
+      if (file.size > 50 * 1024 * 1024) {
+        toast.error(t('analysis.error.fileTooLarge'));
         return;
       }
       setSelectedFile(file);
@@ -42,25 +45,22 @@ const Analysis = () => {
   };
 
   const handleAnalyze = async () => {
-    // Validation selon le type
-    if (contentType === 'text' && !contentText.trim()) return toast.error('Veuillez entrer du texte');
-    if (contentType === 'url' && !contentUrl.trim()) return toast.error('Veuillez entrer une URL');
+    if (contentType === 'text' && !contentText.trim()) return toast.error(t('analysis.error.noText'));
+    if (contentType === 'url' && !contentUrl.trim()) return toast.error(t('analysis.error.noUrl'));
     if ((contentType === 'audio' || contentType === 'video') && !selectedFile && !contentUrl.trim()) {
-      return toast.error('Veuillez sélectionner un fichier ou entrer une URL');
+      return toast.error(t('analysis.error.noFileOrUrl'));
     }
 
     setIsLoading(true);
     try {
       let response;
       
-      // Si on a un fichier, on utilise FormData
       if (selectedFile && (contentType === 'audio' || contentType === 'video')) {
         const formData = new FormData();
         formData.append('file', selectedFile);
         formData.append('type', contentType);
-        response = await analysisAPI.analyzeMediaFile(formData); // Note: Nouvelle méthode API à créer
+        response = await analysisAPI.analyzeMediaFile(formData);
       } else {
-        // Analyse classique (texte ou URL)
         response = await analysisAPI.analyzeContent({
           contentType,
           contentText: contentType === 'text' ? contentText : undefined,
@@ -69,9 +69,9 @@ const Analysis = () => {
       }
 
       setAnalysisResult(response.data.analysis);
-      toast.success('Analyse terminée avec succès !');
+      toast.success(t('analysis.success'));
     } catch (error) {
-      toast.error(error.response?.data?.error || 'Erreur lors de l\'analyse');
+      toast.error(error.response?.data?.error || t('analysis.error.generic'));
     } finally {
       setIsLoading(false);
     }
@@ -102,9 +102,9 @@ const Analysis = () => {
         <div className="flex justify-center mb-4">
           <Brain className="h-12 w-12 text-primary-600" />
         </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Analyseur IA Multi-Format</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">{t('analysis.title')}</h1>
         <p className="text-gray-600 max-w-2xl mx-auto">
-          Détectez les deepfakes, les fake news et les manipulations dans les textes, images, audios et vidéos.
+          {t('analysis.subtitle')}
         </p>
       </div>
 
@@ -112,16 +112,16 @@ const Analysis = () => {
         {/* Input Section */}
         <div className="card">
           <div className="card-body">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Contenu à analyser</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('analysis.inputTitle')}</h2>
 
             {/* Content Type Selector */}
             <div className="mb-6">
               <div className="flex flex-wrap gap-2 bg-gray-100 p-1 rounded-lg">
                 {[
-                  { id: 'text', icon: FileText, label: 'Texte' },
-                  { id: 'url', icon: Link2, label: 'Lien' },
-                  { id: 'audio', icon: Mic, label: 'Audio' },
-                  { id: 'video', icon: Video, label: 'Vidéo' }
+                  { id: 'text', icon: FileText, label: t('analysis.types.text') },
+                  { id: 'url', icon: Link2, label: t('analysis.types.url') },
+                  { id: 'audio', icon: Mic, label: t('analysis.types.audio') },
+                  { id: 'video', icon: Video, label: t('analysis.types.video') }
                 ].map((type) => (
                   <button
                     key={type.id}
@@ -146,20 +146,20 @@ const Analysis = () => {
             <div className="space-y-4">
               {contentType === 'text' && (
                 <div>
-                  <label className="label">Texte à analyser</label>
+                  <label className="label">{t('analysis.textLabel')}</label>
                   <textarea
                     rows={8}
                     value={contentText}
                     onChange={(e) => setContentText(e.target.value)}
                     className="textarea"
-                    placeholder="Collez le texte..."
+                    placeholder={t('analysis.textPlaceholder')}
                   />
                 </div>
               )}
 
               {(contentType === 'url' || contentType === 'audio' || contentType === 'video') && (
                 <div>
-                  <label className="label">URL du contenu {contentType !== 'url' && `(${contentType})`}</label>
+                  <label className="label">{t('analysis.urlLabel')} {contentType !== 'url' && `(${t('analysis.types.' + contentType)})`}</label>
                   <input
                     type="url"
                     value={contentUrl}
@@ -174,7 +174,7 @@ const Analysis = () => {
                 <div className="relative">
                   <div className="flex items-center my-4">
                     <div className="flex-grow border-t border-gray-200"></div>
-                    <span className="mx-4 text-xs text-gray-400 uppercase">Ou importer un fichier</span>
+                    <span className="mx-4 text-xs text-gray-400 uppercase">{t('analysis.orImport')}</span>
                     <div className="flex-grow border-t border-gray-200"></div>
                   </div>
                   
@@ -185,9 +185,9 @@ const Analysis = () => {
                     >
                       <Upload className="h-10 w-10 text-gray-400 mx-auto mb-2" />
                       <p className="text-sm text-gray-600">
-                        Cliquez pour sélectionner un fichier {contentType}
+                        {t('analysis.fileSelect')}
                       </p>
-                      <p className="text-xs text-gray-400 mt-1">MP3, WAV, MP4, MOV (max. 50Mo)</p>
+                      <p className="text-xs text-gray-400 mt-1">{t('analysis.fileFormats')}</p>
                     </div>
                   ) : (
                     <div className="flex items-center justify-between p-3 bg-primary-50 rounded-lg border border-primary-200">
@@ -217,35 +217,91 @@ const Analysis = () => {
               className="w-full btn btn-primary mt-6"
             >
               {isLoading ? (
-                <div className="flex items-center"><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div> Analyse en cours...</div>
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  {t('analysis.loading')}
+                </div>
               ) : (
-                <div className="flex items-center space-x-2"><Brain className="h-5 w-5" /> <span>Lancer l'analyse intelligente</span></div>
+                <div className="flex items-center space-x-2">
+                  <Brain className="h-5 w-5" />
+                  <span>{t('analysis.analyzeButton')}</span>
+                </div>
               )}
             </button>
           </div>
         </div>
 
-        {/* Results Section (Identique à votre code original) */}
+        {/* Results Section */}
         <div className="card">
           <div className="card-body">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Résultat de l'analyse</h2>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('analysis.resultsTitle')}</h2>
             {!analysisResult ? (
               <div className="text-center py-12">
                 <Brain className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">Sélectionnez un média et lancez l'analyse pour voir les résultats</p>
+                <p className="text-gray-500">{t('analysis.emptyResults')}</p>
               </div>
             ) : (
               <div className="space-y-6">
                 <div className={`p-4 rounded-lg border-2 ${getVerdictColor(analysisResult.verdict)}`}>
                   <div className="flex items-center space-x-3 mb-2">
                     {getVerdictIcon(analysisResult.verdict)}
-                    <h3 className="text-xl font-bold capitalize">{analysisResult.verdict}</h3>
+                    <h3 className="text-xl font-bold capitalize">{t(`analysis.verdict.${analysisResult.verdict}`)}</h3>
                   </div>
                   <p className="text-sm">{analysisResult.explanation}</p>
                 </div>
                 
-                {/* Score et Détails... (le reste de votre logique de résultat) */}
-                {/* ... */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="flex items-center text-sm text-gray-600 mb-1">
+                      <TrendingUp className="h-4 w-4 mr-1" />
+                      {t('analysis.confidenceScore')}
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {Math.round(analysisResult.confidence_score * 100)}%
+                    </div>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <div className="flex items-center text-sm text-gray-600 mb-1">
+                      <Clock className="h-4 w-4 mr-1" />
+                      {t('analysis.analysisTime')}
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      {analysisResult.analysis_time_ms}ms
+                    </div>
+                  </div>
+                </div>
+
+                {analysisResult.details && (
+                  <div>
+                    <button
+                      onClick={() => setShowDetails(!showDetails)}
+                      className="flex items-center space-x-2 text-sm text-primary-600 hover:text-primary-700 mb-2"
+                    >
+                      {showDetails ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      <span>{showDetails ? t('analysis.hideDetails') : t('analysis.showDetails')}</span>
+                    </button>
+                    
+                    {showDetails && (
+                      <div className="bg-gray-50 p-4 rounded-lg text-sm text-gray-700 space-y-2">
+                        <p><strong>{t('analysis.detectedIssues')}:</strong> {analysisResult.details.issues_detected.join(', ')}</p>
+                        <p><strong>{t('analysis.recommendations')}:</strong> {analysisResult.details.recommendations}</p>
+                        {analysisResult.details.source_reliability && (
+                          <p><strong>{t('analysis.sourceReliability')}:</strong> {Math.round(analysisResult.details.source_reliability * 100)}%</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {analysisResult.verdict === 'faux' && (
+                  <div className="bg-danger-50 border border-danger-200 rounded-lg p-4">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <ShieldCheck className="h-5 w-5 text-danger-600" />
+                      <span className="font-medium text-danger-800">{t('analysis.safetyWarning')}</span>
+                    </div>
+                    <p className="text-sm text-danger-700">{t('analysis.fakeContentWarning')}</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

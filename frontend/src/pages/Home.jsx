@@ -1,11 +1,13 @@
+// src/pages/Home.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  ShieldCheck, 
-  Brain, 
-  BookOpen, 
-  Users, 
-  TrendingUp, 
+import { useTranslation } from 'react-i18next';
+import {
+  ShieldCheck,
+  Brain,
+  BookOpen,
+  Users,
+  TrendingUp,
   Globe,
   Zap,
   CheckCircle,
@@ -14,64 +16,65 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 
 const Home = () => {
+  const { t, i18n } = useTranslation();
   const { isAuthenticated } = useAuth();
 
   const features = [
     {
       icon: Brain,
-      title: 'Analyse IA Avancée',
-      description: 'Notre intelligence artificielle analyse le contenu pour détecter les fake news et évaluer la fiabilité des sources.',
+      title: t('home.features.ai.title'),
+      description: t('home.features.ai.description'),
       color: 'text-primary-600',
       bgColor: 'bg-primary-50'
     },
     {
       icon: BookOpen,
-      title: 'Parcours Éducatifs',
-      description: 'Quiz interactifs et modules de formation pour développer l esprit critique et la littératie médiatique.',
+      title: t('home.features.education.title'),
+      description: t('home.features.education.description'),
       color: 'text-success-600',
       bgColor: 'bg-success-50'
     },
     {
       icon: ShieldCheck,
-      title: 'Vérification de Sources',
-      description: 'Base de données de sources fiables et outils de vérification croisée pour valider l information.',
+      title: t('home.features.sources.title'),
+      description: t('home.features.sources.description'),
       color: 'text-warning-600',
       bgColor: 'bg-warning-50'
     },
     {
       icon: Users,
-      title: 'Communauté Engagée',
-      description: 'Rejoignez une communauté de jeunes engagés pour une information fiable et responsable.',
+      title: t('home.features.community.title'),
+      description: t('home.features.community.description'),
       color: 'text-secondary-600',
       bgColor: 'bg-secondary-50'
     }
   ];
 
   const stats = [
-    { number: '10K+', label: 'Analyses réalisées', icon: TrendingUp },
-    { number: '5K+', label: 'Utilisateurs actifs', icon: Users },
-    { number: '50+', label: 'Sources vérifiées', icon: ShieldCheck },
-    { number: '15+', label: 'Pays africains', icon: Globe }
+    { number: '10K+', label: t('home.stats.analyses'), icon: TrendingUp },
+    { number: '5K+', label: t('home.stats.users'), icon: Users },
+    { number: '50+', label: t('home.stats.sources'), icon: ShieldCheck },
+    { number: '15+', label: t('home.stats.countries'), icon: Globe }
   ];
 
   const challenges = [
     {
-      title: 'Détection de Fake News',
-      description: 'Identifier et signaler les contenus trompeurs avec l aide de l IA',
+      title: t('home.challenges.fakeNews.title'),
+      description: t('home.challenges.fakeNews.description'),
       icon: Zap,
-      category: 'IA & Lutte contre la désinformation'
+      category: t('home.challenges.fakeNews.category')
     },
     {
-      title: 'Littératie Médiatique',
-      description: 'Former l esprit critique à travers des parcours adaptatifs',
+      title: t('home.challenges.mediaLiteracy.title'),
+      description: t('home.challenges.mediaLiteracy.description'),
       icon: Award,
-      category: 'Éducation critique'
+      category: t('home.challenges.mediaLiteracy.category')
     },
     {
-      title: 'Vérification Croisée',
-      description: 'Comparer les informations avec des sources fiables',
+      title: t('home.challenges.factChecking.title'),
+      description: t('home.challenges.factChecking.description'),
       icon: CheckCircle,
-      category: 'Fact-checking intelligent'
+      category: t('home.challenges.factChecking.category')
     }
   ];
 
@@ -83,12 +86,11 @@ const Home = () => {
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
           <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-6 animate-fade-in">
-              <span className="block">Jeunesse, Intelligence Artificielle</span>
-              <span className="block text-primary-200">et Éducation Critique en Afrique</span>
+              <span className="block">{t('home.hero.title1')}</span>
+              <span className="block text-primary-200">{t('home.hero.title2')}</span>
             </h1>
             <p className="text-xl md:text-2xl mb-8 text-primary-100 max-w-4xl mx-auto text-balance">
-              Concevoir et développer des solutions numériques innovantes intégrant l'IA 
-              pour améliorer la vie éducative et renforcer la littératie médiatique des jeunes.
+              {t('home.hero.subtitle')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               {!isAuthenticated ? (
@@ -97,13 +99,13 @@ const Home = () => {
                     to="/register"
                     className="bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-primary-50 transition-colors shadow-lg"
                   >
-                    Rejoindre la plateforme
+                    {t('home.hero.ctaPrimary')}
                   </Link>
                   <Link
                     to="/login"
                     className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-primary-600 transition-colors"
                   >
-                    Se connecter
+                    {t('home.hero.ctaSecondary')}
                   </Link>
                 </>
               ) : (
@@ -111,13 +113,13 @@ const Home = () => {
                   to="/dashboard"
                   className="bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-primary-50 transition-colors shadow-lg"
                 >
-                  Accéder au tableau de bord
+                  {t('home.hero.ctaDashboard')}
                 </Link>
               )}
             </div>
           </div>
         </div>
-        
+
         {/* Wave SVG */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-20 fill-white">
@@ -131,11 +133,10 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Notre Mission
+              {t('home.mission.title')}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Lutter contre la désinformation, vérifier la fiabilité des sources, 
-              et renforcer l'esprit critique des jeunes à Madagascar et en Afrique.
+              {t('home.mission.subtitle')}
             </p>
           </div>
 
@@ -183,10 +184,10 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Axes du Hackathon INSI
+              {t('home.challenges.title')}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Des défis conçus pour stimuler l innovation et l engagement des jeunes
+              {t('home.challenges.subtitle')}
             </p>
           </div>
 
@@ -221,10 +222,10 @@ const Home = () => {
       <section className="py-20 bg-primary-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Prêt à rejoindre le mouvement ?
+            {t('home.cta.title')}
           </h2>
           <p className="text-xl text-primary-100 mb-8">
-            Rejoignez des milliers de jeunes engagés pour une information fiable et responsable.
+            {t('home.cta.subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {!isAuthenticated ? (
@@ -233,13 +234,13 @@ const Home = () => {
                   to="/register"
                   className="bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-primary-50 transition-colors shadow-lg"
                 >
-                  Créer un compte gratuit
+                  {t('home.cta.primary')}
                 </Link>
                 <Link
                   to="/about"
                   className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-primary-600 transition-colors"
                 >
-                  En savoir plus
+                  {t('home.cta.secondary')}
                 </Link>
               </>
             ) : (
@@ -247,7 +248,7 @@ const Home = () => {
                 to="/dashboard"
                 className="bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-primary-50 transition-colors shadow-lg"
               >
-                Continuer mon apprentissage
+                {t('home.cta.dashboard')}
               </Link>
             )}
           </div>

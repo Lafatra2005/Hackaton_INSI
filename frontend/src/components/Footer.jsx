@@ -1,8 +1,12 @@
+// src/components/Footer.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { ShieldCheck, Heart, Twitter, Facebook, Github } from 'lucide-react';
 
 const Footer = () => {
+  const { t } = useTranslation();
+
   return (
     <footer className="bg-white border-t border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -13,12 +17,11 @@ const Footer = () => {
               <ShieldCheck className="h-8 w-8 text-primary-600" />
               <div>
                 <h3 className="text-lg font-bold text-gray-900">Education AI</h3>
-                <p className="text-sm text-gray-500">Youth, AI and Digital Innovation for a Smarter Education</p>
+                <p className="text-sm text-gray-500">{t('footer.slogan')}</p>
               </div>
             </div>
             <p className="text-sm text-gray-600 mb-4 max-w-md">
-              Plateforme éducative utilisant l'intelligence artificielle pour lutter contre la désinformation 
-              et renforcer la littératie médiatique des jeunes en Afrique.
+              {t('footer.description')}
             </p>
             <div className="flex space-x-4">
               <a href="#" className="text-gray-400 hover:text-primary-600">
@@ -36,27 +39,27 @@ const Footer = () => {
           {/* Links */}
           <div>
             <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
-              Plateforme
+              {t('footer.platform.title')}
             </h4>
             <ul className="space-y-2">
               <li>
                 <Link to="/analysis" className="text-sm text-gray-600 hover:text-primary-600">
-                  Analyse IA
+                  {t('footer.platform.aiAnalysis')}
                 </Link>
               </li>
               <li>
                 <Link to="/quizzes" className="text-sm text-gray-600 hover:text-primary-600">
-                  Quiz éducatifs
+                  {t('footer.platform.quizzes')}
                 </Link>
               </li>
               <li>
                 <Link to="/trusted-sources" className="text-sm text-gray-600 hover:text-primary-600">
-                  Sources fiables
+                  {t('footer.platform.trustedSources')}
                 </Link>
               </li>
               <li>
                 <Link to="/about" className="text-sm text-gray-600 hover:text-primary-600">
-                  À propos
+                  {t('footer.platform.about')}
                 </Link>
               </li>
             </ul>
@@ -65,27 +68,27 @@ const Footer = () => {
           {/* Resources */}
           <div>
             <h4 className="text-sm font-semibold text-gray-900 uppercase tracking-wider mb-4">
-              Ressources
+              {t('footer.resources.title')}
             </h4>
             <ul className="space-y-2">
               <li>
                 <a href="#" className="text-sm text-gray-600 hover:text-primary-600">
-                  Guide de littératie médiatique
+                  {t('footer.resources.guide')}
                 </a>
               </li>
               <li>
                 <a href="#" className="text-sm text-gray-600 hover:text-primary-600">
-                  Signaler un problème
+                  {t('footer.resources.report')}
                 </a>
               </li>
               <li>
                 <a href="#" className="text-sm text-gray-600 hover:text-primary-600">
-                  Documentation API
+                  {t('footer.resources.api')}
                 </a>
               </li>
               <li>
                 <a href="#" className="text-sm text-gray-600 hover:text-primary-600">
-                  Blog
+                  {t('footer.resources.blog')}
                 </a>
               </li>
             </ul>
@@ -95,27 +98,27 @@ const Footer = () => {
         <div className="border-t border-gray-200 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-sm text-gray-500">
-              © 2024 Education AI Platform. Conçu pour le Hackathon INSI.
+              {t('footer.copyright')}
             </p>
             <div className="flex items-center space-x-1 mt-4 md:mt-0">
               <Heart className="h-4 w-4 text-red-500" />
               <span className="text-sm text-gray-500">
-                Fait avec passion pour l'éducation en Afrique
+                {t('footer.madeWithLove')}
               </span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Banner ODD */}
+      {/* SDG Banner */}
       <div className="bg-primary-600 text-white py-3">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <p className="text-sm">
-              <strong>Objectifs de Développement Durable :</strong>
-              <span className="mx-2">ODD 4 - Éducation de qualité</span>
+              <strong>{t('footer.sdg.title')}</strong>
+              <span className="mx-2">{t('footer.sdg.goal4')}</span>
               <span className="mx-2">•</span>
-              <span>ODD 16 - Sociétés pacifiques et inclusives</span>
+              <span>{t('footer.sdg.goal16')}</span>
             </p>
           </div>
         </div>
