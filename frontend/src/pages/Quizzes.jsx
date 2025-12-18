@@ -1,267 +1,121 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  BookOpen, 
-  Clock, 
-  Award, 
-  Filter, 
-  TrendingUp,
-  CheckCircle,
-  Clock3,
-  Brain
-} from 'lucide-react';
-import toast from 'react-hot-toast';
+import { GraduationCap, Filter, Search, BookOpen } from 'lucide-react';
 import { quizAPI } from '../services/api';
 
 const Quizzes = () => {
   const [quizzes, setQuizzes] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     category: '',
-    difficulty: '',
-    language: 'fr'
+    difficulty: ''
   });
-  const [loading, setLoading] = useState(true);
 
-  const categories = [
-    { value: '', label: 'Toutes les catégories' },
-    { value: 'media_literacy', label: 'Littératie médiatique' },
-    { value: 'critical_thinking', label: 'Esprit critique' },
-    { value: 'fact_checking', label: 'Vérification des faits' }
-  ];
-
-  const difficulties = [
-    { value: '', label: 'Tous niveaux' },
-    { value: 'debutant', label: 'Débutant' },
-    { value: 'intermediaire', label: 'Intermédiaire' },
-    { value: 'avance', label: 'Avancé' }
-  ];
-
+  // Déclenche fetchQuizzes dès que filters change
   useEffect(() => {
     fetchQuizzes();
   }, [filters]);
 
   const fetchQuizzes = async () => {
+    setLoading(true);
     try {
+      // Envoie category et difficulty à l'API backend
       const response = await quizAPI.getAllQuizzes(filters);
-      setQuizzes(response.data.quizzes);
+      setQuizzes(response.data.quizzes || []);
     } catch (error) {
-      toast.error('Erreur lors du chargement des quiz');
+      console.error("Erreur de filtrage", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const getDifficultyColor = (difficulty) => {
-    switch (difficulty) {
-      case 'debutant':
-        return 'badge-success';
-      case 'intermediaire':
-        return 'badge-warning';
-      case 'avance':
-        return 'badge-danger';
-      default:
-        return 'badge-secondary';
-    }
-  };
-
-  const getCategoryIcon = (category) => {
-    switch (category) {
-      case 'media_literacy':
-        return BookOpen;
-      case 'critical_thinking':
-        return Brain;
-      case 'fact_checking':
-        return CheckCircle;
-      default:
-        return Award;
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center mb-4">
-          <BookOpen className="h-8 w-8 text-success-600 mr-3" />
-          <h1 className="text-3xl font-bold text-gray-900">
-            Quiz Éducatifs
-          </h1>
-        </div>
-        <p className="text-gray-600 max-w-2xl">
-          Testez vos connaissances et développez vos compétences en littératie médiatique 
-          et esprit critique avec nos quiz interactifs.
-        </p>
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 flex items-center">
+            <GraduationCap className="mr-3 text-indigo-600" size={36} />
+            Espace de Formation
+        </h1>
       </div>
 
-      {/* Filters */}
-      <div className="card mb-8">
-        <div className="card-body">
-          <div className="flex items-center mb-4">
-            <Filter className="h-5 w-5 text-gray-500 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900">Filtres</h3>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="label">Catégorie</label>
-              <select
-                value={filters.category}
-                onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-                className="select"
-              >
-                {categories.map((cat) => (
-                  <option key={cat.value} value={cat.value}>
-                    {cat.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className="label">Niveau</label>
-              <select
-                value={filters.difficulty}
-                onChange={(e) => setFilters({ ...filters, difficulty: e.target.value })}
-                className="select"
-              >
-                {difficulties.map((diff) => (
-                  <option key={diff.value} value={diff.value}>
-                    {diff.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            
-            <div>
-              <label className="label">Langue</label>
-              <select
-                value={filters.language}
-                onChange={(e) => setFilters({ ...filters, language: e.target.value })}
-                className="select"
-                disabled
-              >
-                <option value="fr">Français</option>
-                <option value="en">English</option>
-                <option value="mg">Malagasy</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Quiz Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {quizzes.map((quiz) => {
-          const CategoryIcon = getCategoryIcon(quiz.category);
-          
-          return (
-            <div key={quiz.id} className="card hover:shadow-lg transition-shadow">
-              <div className="card-body">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center space-x-2">
-                    <div className="bg-primary-100 p-2 rounded-lg">
-                      <CategoryIcon className="h-5 w-5 text-primary-600" />
-                    </div>
-                    <span className={`badge ${getDifficultyColor(quiz.difficulty)}`}>
-                      {quiz.difficulty}
-                    </span>
-                  </div>
-                  <div className="text-right text-sm text-gray-500">
-                    <div className="flex items-center">
-                      <Clock3 className="h-4 w-4 mr-1" />
-                      {quiz.time_limit_minutes || 15} min
-                    </div>
-                  </div>
-                </div>
-
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {quiz.title}
-                </h3>
-                
-                <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                  {quiz.description}
-                </p>
-
-                <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                  <div className="flex items-center">
-                    <Award className="h-4 w-4 mr-1" />
-                    {quiz.questions_count} questions
-                  </div>
-                  <div className="flex items-center capitalize">
-                    {quiz.category.replace('_', ' ')}
-                  </div>
-                </div>
-
-                <Link
-                  to={`/quizzes/${quiz.id}`}
-                  className="w-full btn btn-primary"
-                >
-                  Commencer le quiz
-                </Link>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {quizzes.length === 0 && (
-        <div className="text-center py-12">
-          <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Aucun quiz disponible
-          </h3>
-          <p className="text-gray-500 mb-4">
-            Aucun quiz ne correspond à vos critères de recherche.
-          </p>
-          <button
-            onClick={() => setFilters({ category: '', difficulty: '', language: 'fr' })}
-            className="btn btn-outline"
+      {/* BLOC FILTRES */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 flex flex-wrap gap-4 items-end">
+        <div className="flex-1 min-w-[250px]">
+          <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Thématique</label>
+          <select 
+            className="w-full p-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition"
+            value={filters.category}
+            onChange={(e) => setFilters({...filters, category: e.target.value})}
           >
-            Réinitialiser les filtres
-          </button>
+            <option value="">Tous les thèmes</option>
+            <option value="media_literacy">Littératie médiatique & info</option>
+            <option value="pedagogy">Applications pédagogiques</option>
+            <option value="adaptive">Parcours adaptatif</option>
+            <option value="critical_thinking">Esprit critique</option>
+          </select>
+        </div>
+
+        <div className="flex-1 min-w-[200px]">
+          <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">Niveau</label>
+          <select 
+            className="w-full p-3 bg-gray-50 border-none rounded-xl focus:ring-2 focus:ring-indigo-500 transition"
+            value={filters.difficulty}
+            onChange={(e) => setFilters({...filters, difficulty: e.target.value})}
+          >
+            <option value="">Tous les niveaux</option>
+            <option value="debutant">Débutant (Easy)</option>
+            <option value="intermediaire">Intermédiaire (Medium)</option>
+            <option value="avance">Avancé (Hard)</option>
+          </select>
+        </div>
+
+        <button 
+          onClick={() => setFilters({category: '', difficulty: ''})}
+          className="p-3 text-gray-500 hover:text-indigo-600 font-medium"
+        >
+          Réinitialiser
+        </button>
+      </div>
+
+      {/* LISTE DES QUIZ */}
+      {loading ? (
+        <div className="flex justify-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {quizzes.length > 0 ? quizzes.map((quiz, i) => (
+            <div key={i} className="group bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-xl transition-all duration-300">
+              <div className="flex justify-between items-start mb-4">
+                <div className="p-3 bg-indigo-50 rounded-lg text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                  <BookOpen size={24} />
+                </div>
+                <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold uppercase">
+                    {quiz.difficulty}
+                </span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">{quiz.title}</h3>
+              <p className="text-gray-500 text-sm mb-6">{quiz.description}</p>
+              <Link 
+  to={`/quizzes/${quiz.id}?difficulty=${
+    filters.difficulty === 'debutant' ? 'easy' : 
+    filters.difficulty === 'avance' ? 'hard' : 
+    filters.difficulty === 'intermediaire' ? 'medium' : 'medium'
+  }`} 
+  className="block w-full text-center bg-indigo-600 text-white font-bold py-3 rounded-xl hover:bg-indigo-700 transition"
+>
+  Lancer le module
+</Link>
+            </div>
+          )) : (
+            <div className="col-span-full text-center py-20 bg-gray-50 rounded-3xl border-2 border-dashed border-gray-200">
+              <Search className="mx-auto text-gray-300 mb-4" size={48} />
+              <p className="text-gray-500 font-medium">Aucun module disponible pour cette combinaison.</p>
+              <p className="text-sm text-gray-400">Essayez de changer la difficulté ou le thème.</p>
+            </div>
+          )}
         </div>
       )}
-
-      {/* Progress Section */}
-      <div className="mt-12 card">
-        <div className="card-body">
-          <div className="flex items-center mb-4">
-            <TrendingUp className="h-5 w-5 text-primary-600 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900">
-              Votre progression
-            </h3>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="text-center p-4 bg-primary-50 rounded-lg">
-              <div className="text-2xl font-bold text-primary-600 mb-1">
-                0
-              </div>
-              <p className="text-sm text-gray-600">Quiz complétés</p>
-            </div>
-            <div className="text-center p-4 bg-success-50 rounded-lg">
-              <div className="text-2xl font-bold text-success-600 mb-1">
-                0%
-              </div>
-              <p className="text-sm text-gray-600">Score moyen</p>
-            </div>
-            <div className="text-center p-4 bg-warning-50 rounded-lg">
-              <div className="text-2xl font-bold text-warning-600 mb-1">
-                0h
-              </div>
-              <p className="text-sm text-gray-600">Temps d'apprentissage</p>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
