@@ -3,12 +3,101 @@ import Sentiment from 'sentiment';
 import stringSimilarity from 'string-similarity';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
+import { HfInference } from '@huggingface/inference';
 import TrustedSource from '../models/TrustedSource.js';
 
 const sentiment = new Sentiment();
 
+// Lazy initialization for HfInference to ensure dotenv is loaded
+let hf;
+
 class AIAnalysisService {
+    /**
+     * Helper to classify text using Hugging Face models
+     * @param {string} text - The text to analyze
+     */
+    static async analyzeWithHF(text) {
+        try {
+            if (!process.env.HF_TOKEN) {
+                console.warn('HF_TOKEN not found, skipping ML analysis');
+                return null;
+            }
+
+            // Initialize client if not exists
+            if (!hf) {
+                hf = new HfInference(process.env.HF_TOKEN);
+            }
+
+            // Clean text for better inference
+            const cleanText = text.substring(0, 512);
+
+            // 1. Zero-Shot Classification (More robust/available than specific fine-tunes)
+            // We use standard BART-large-mnli which is almost always available
+            const zeroShotResult = await hf.zeroShotClassification({
+                model: 'facebook/bart-large-mnli',
+                inputs: cleanText,
+                parameters: { candidate_labels: ['reliable fact-based news', 'fake news formulation', 'emotional opinion', 'satire'] }
+            });
+
+            // 2. Sentiment/Bias Model (keeping this as it's standard)
+            // If this fails, we catch the error below, so it's safer
+            let sentimentResult = null;
+            try {
+                sentimentResult = await hf.textClassification({
+                    model: 'cardiffnlp/twitter-roberta-base-sentiment-latest',
+                    inputs: cleanText
+                });
+            } catch (err) {
+                console.warn('Sentiment model failed, continuing with just zero-shot', err.message);
+            }
+
+            // Process Scores
+            // zeroShotResult.labels and zeroShotResult.scores are aligned arrays
+            const getScore = (label) => {
+                const index = zeroShotResult.labels.indexOf(label);
+                return index !== -1 ? zeroShotResult.scores[index] : 0;
+            };
+
+            const reliableScore = getScore('reliable fact-based news');
+            const fakeScore = getScore('fake news formulation');
+
+            // Calculate final ML reliability score (0-1)
+            // We prioritize reliable score but penalize for fake signals
+            let mlScore = reliableScore;
+
+            // If fake score is significantly higher, pull it down
+            if (fakeScore > reliableScore) {
+                mlScore = 1 - fakeScore;
+            }
+
+            // Process Sentiment if available
+            let sentimentLabel = 'neutral';
+            if (sentimentResult) {
+                const topSentiment = sentimentResult.reduce((prev, current) =>
+                    (prev.score > current.score) ? prev : current
+                );
+                sentimentLabel = topSentiment.label;
+            }
+
+            return {
+                mlScore: mlScore, // 0-1
+                mlConfidence: Math.max(reliableScore, fakeScore), // How sure the model is of its main decision
+                sentiment: sentimentLabel,
+                classification: zeroShotResult.labels[0], // Top category
+                rawResults: {
+                    zeroShot: zeroShotResult,
+                    sentiment: sentimentResult
+                }
+            };
+
+        } catch (error) {
+            console.error('Hugging Face Inference Error:', error.message);
+            return null; // Fallback to heuristics
+        }
+    }
+
     static async analyzeText(text) {
+        // --- Heuristics Analysis (Legacy) ---
         const factors = {
             sensationalism: 0,
             emotionalLanguage: 0,
@@ -25,60 +114,73 @@ class AIAnalysisService {
             unsupportedClaims: []
         };
 
-        // Analyse du sentiment
+        // Sentiment Analysis (Heuristic)
         const sentimentResult = sentiment.analyze(text);
         factors.emotionalLanguage = Math.min(Math.abs(sentimentResult.score) / 10, 1);
 
-        // Recherche de mots sensationnalistes
+        // Sensational Words
         const sensationalWords = [
             'choquant', 'incroyable', 'époustouflant', 'révolutionnaire', 'scandale',
             'urgent', 'exclusif', 'briseur', 'sensationnel', 'dramatique',
-            'catastrophe', 'désastreux', 'honteux', 'terrifiant', 'effrayant'
+            'catastrophe', 'désastreux', 'honteux', 'terrifiant', 'effrayant',
+            'complot', 'mensonge', 'secret qu\'on vous cache'
         ];
 
-        const foundSensationalWords = sensationalWords.filter(word => 
+        const foundSensationalWords = sensationalWords.filter(word =>
             text.toLowerCase().includes(word.toLowerCase())
         );
         biasIndicators.sensationalWords = foundSensationalWords;
         factors.sensationalism = Math.min(foundSensationalWords.length / 3, 1);
 
-        // Analyse grammaticale basique
-        const doc = nlp(text);
-        const sentences = doc.sentences().out('array');
-        
-        // Comptons les phrases avec des majuscules excessives (signe de clickbait)
+        // Grammar/Caps Check
         const excessiveCaps = (text.match(/[A-Z]{4,}/g) || []).length;
         factors.clickbaitIndicators = Math.min(excessiveCaps / 5, 1);
 
-        // Recherche de mentions de sources
-        const sourceKeywords = ['selon', 'source:', 'd après', 'rapporte', 'étude', 'recherche'];
-        factors.sourceMention = sourceKeywords.some(keyword => 
+        // Source Mentions
+        const sourceKeywords = ['selon', 'source:', 'd\'après', 'rapporte', 'étude', 'recherche', 'afp', 'reuters'];
+        factors.sourceMention = sourceKeywords.some(keyword =>
             text.toLowerCase().includes(keyword.toLowerCase())
         ) ? 0.8 : 0;
 
-        // Calcul du score de fiabilité (0-100)
-        let reliabilityScore = 50; // Score de base
+        // Calculate Heuristic Score (0-100)
+        let heuristicScore = 50;
+        heuristicScore -= factors.sensationalism * 25;
+        heuristicScore -= factors.emotionalLanguage * 15;
+        heuristicScore -= factors.clickbaitIndicators * 20;
+        heuristicScore += factors.sourceMention * 20;
+        heuristicScore = Math.max(0, Math.min(100, heuristicScore));
 
-        // Pénalités
-        reliabilityScore -= factors.sensationalism * 25;
-        reliabilityScore -= factors.emotionalLanguage * 15;
-        reliabilityScore -= factors.clickbaitIndicators * 20;
+        // --- ML Analysis (Hugging Face) ---
+        const mlResult = await this.analyzeWithHF(text);
 
-        // Bonus
-        reliabilityScore += factors.sourceMention * 20;
+        let finalScore = heuristicScore;
+        let usedML = false;
 
-        // Limite entre 0 et 100
-        reliabilityScore = Math.max(0, Math.min(100, reliabilityScore));
+        if (mlResult) {
+            usedML = true;
+            // Normalize ML score (0-1) to (0-100)
+            const mlScore100 = mlResult.mlScore * 100;
 
-        // Classification
+            // Combine: Heuristics 40% + ML 60% (giving more weight to ML if available)
+            // Or as requested: average match
+            finalScore = (heuristicScore + mlScore100) / 2;
+
+            // Adjust bias indicators based on ML sentiment
+            if (mlResult.sentiment === 'negative' && factors.emotionalLanguage < 0.5) {
+                factors.emotionalLanguage = 0.6; // Bump up if ML detects negativity
+            }
+        }
+
+        // Final Verdict
         let verdict = 'douteux';
-        if (reliabilityScore >= 75) verdict = 'fiable';
-        else if (reliabilityScore <= 35) verdict = 'faux';
+        if (finalScore >= 75) verdict = 'fiable';
+        else if (finalScore <= 35) verdict = 'faux';
 
-        const explanation = this.generateExplanation(reliabilityScore, factors, biasIndicators);
+        // Generate Explanation
+        const explanation = this.generateExplanation(finalScore, factors, biasIndicators, usedML, mlResult);
 
         return {
-            score: Math.round(reliabilityScore * 100) / 100,
+            score: Math.round(finalScore * 100) / 100,
             verdict,
             explanation,
             factors,
@@ -86,53 +188,169 @@ class AIAnalysisService {
             analysisDetails: {
                 sentimentScore: sentimentResult.score,
                 wordCount: text.split(' ').length,
-                sentenceCount: sentences.length
+                usedML,
+                mlConfidence: mlResult ? mlResult.mlConfidence : null
             }
         };
     }
 
+    /**
+     * Helper to validate URL before processing
+     * @param {string} url 
+     */
+    static validateURL(url) {
+        try {
+            const urlObj = new URL(url);
+            const domain = urlObj.hostname.toLowerCase();
+            const path = urlObj.pathname.toLowerCase();
+
+            // 1. Blocklist of non-news/irrelevant domains
+            const blocklist = [
+                'github.com', 'gitlab.com', 'bitbucket.org', 'sourceforge.net',
+                'stackoverflow.com', 'npmjs.com', 'pypi.org',
+                'linkedin.com', 'facebook.com', 'twitter.com', 'instagram.com',
+                'youtube.com', 'tiktok.com', // Video platforms require different handling
+                'localhost', '127.0.0.1'
+            ];
+
+            if (blocklist.some(d => domain.includes(d))) {
+                return {
+                    isValid: false,
+                    reason: "Ce type de lien (réseaux sociaux, code, plateforme technique) n'est pas pris en charge pour l'analyse de fake news."
+                };
+            }
+
+            // 2. Extension Check
+            const ignoredExtensions = [
+                '.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx',
+                '.zip', '.rar', '.tar', '.gz', '.7z',
+                '.exe', '.apk', '.dmg', '.iso',
+                '.jpg', '.jpeg', '.png', '.gif', '.svg', // Images should use analyzeImage
+                '.mp3', '.mp4', '.avi', '.mov',
+                '.css', '.js', '.json', '.xml', '.sql', '.git'
+            ];
+
+            if (ignoredExtensions.some(ext => path.endsWith(ext))) {
+                return {
+                    isValid: false,
+                    reason: "Le format de fichier n'est pas supporté (seuls les articles web HTML sont analysés)."
+                };
+            }
+
+            return { isValid: true };
+        } catch (e) {
+            return { isValid: false, reason: "URL invalide." };
+        }
+    }
+
+    /**
+     * Helper to validate scraped content
+     * @param {string} content 
+     */
+    static validateContent(content) {
+        if (!content || content.length < 200) {
+            return {
+                isValid: false,
+                reason: "Le contenu récupéré est trop court pour une analyse fiable (moins de 200 caractères)."
+            };
+        }
+
+        // Check for code density (if > 30% of lines end with ; { } or look like code)
+        const lines = content.split('\n');
+        const codeLines = lines.filter(line =>
+            line.trim().endsWith(';') ||
+            line.trim().endsWith('{') ||
+            line.trim().endsWith('}') ||
+            line.includes('function') ||
+            line.includes('const ') ||
+            line.includes('import ')
+        ).length;
+
+        if (lines.length > 5 && (codeLines / lines.length) > 0.3) {
+            return {
+                isValid: false,
+                reason: "Le contenu ressemble à du code informatique ou une documentation technique, non pertinent pour la détection de fake news."
+            };
+        }
+
+        return { isValid: true };
+    }
+
     static async analyzeURL(url) {
         try {
-            // Vérifier d'abord si c'est une source fiable
-            const sourceCheck = await TrustedSource.verifySource(url);
-            
-            if (sourceCheck.isTrusted) {
+            // 0. Pre-validation
+            const validation = this.validateURL(url);
+            if (!validation.isValid) {
                 return {
-                    score: sourceCheck.reliabilityScore * 100,
+                    score: 0,
+                    verdict: 'non pertinent',
+                    explanation: validation.reason,
+                    factors: { irrelevant: 1 },
+                    biasIndicators: { irrelevant: true },
+                    isIrrelevant: true
+                };
+            }
+
+            // 1. Trusted Source Check
+            const sourceCheck = await TrustedSource.verifySource(url);
+
+            if (sourceCheck.isTrusted) {
+                // trusted trusted sources get a boost
+                return {
+                    score: Math.max(85, sourceCheck.reliabilityScore * 100), // Ensure at least 85 for trusted
                     verdict: 'fiable',
-                    explanation: `Cette source est répertoriée comme fiable dans notre base de données : ${sourceCheck.source.name}`,
+                    explanation: `Cette source est identifiée comme fiable dans notre base de données vérifiée : ${sourceCheck.source.name}`,
                     factors: { knownSource: 1 },
                     biasIndicators: { knownSource: true },
                     sourceInfo: sourceCheck.source
                 };
             }
 
-            // Récupérer le contenu de la page
+            // 2. Scrape Content
             const response = await axios.get(url, {
                 timeout: 10000,
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (compatible; EducationAI/1.0)'
+                    'User-Agent': 'Mozilla/5.0 (compatible; EducationAI-Bot/1.0)'
                 }
             });
 
             const $ = cheerio.load(response.data);
-            
-            // Extraire le titre et le contenu principal
+
             const title = $('title').text() || $('h1').first().text() || '';
             const description = $('meta[name="description"]').attr('content') || '';
-            const content = $('article').text() || $('main').text() || $('body').text();
-            
-            // Analyser le contenu
-            const textAnalysis = await this.analyzeText(`${title} ${description} ${content}`.substring(0, 2000));
 
-            // Vérifier le domaine
+            // Improve content extraction
+            // Remove scripts, styles, navs to get clean text
+            $('script, style, nav, footer, header, aside, code, pre').remove(); // Added code, pre removal
+            const content = $('article').text() || $('main').text() || $('body').text();
+
+            const fullText = `${title}. ${description}. ${content}`.replace(/\s+/g, ' ').trim();
+
+            // 3. Post-validation (Content)
+            const contentValidation = this.validateContent(content); // Check body content mainly
+            if (!contentValidation.isValid) {
+                return {
+                    score: 0,
+                    verdict: 'non pertinent',
+                    explanation: contentValidation.reason,
+                    factors: { insufficientContent: 1 },
+                    biasIndicators: {},
+                    isIrrelevant: true
+                };
+            }
+
+            // 4. Analyze Content (Heuristic + ML)
+            const textAnalysis = await this.analyzeText(fullText.substring(0, 3000));
+
+            // 5. Domain Reputation Check
             const domain = new URL(url).hostname;
-            const suspiciousDomains = ['.wordpress.com', '.blogspot.com', 'facebook.com', 'twitter.com'];
+            const suspiciousDomains = ['.wordpress.com', '.blogspot.com', 'foireux.com']; // Add real ones
             const isSuspiciousDomain = suspiciousDomains.some(d => domain.includes(d));
 
             if (isSuspiciousDomain) {
-                textAnalysis.score -= 15;
+                textAnalysis.score -= 20;
                 textAnalysis.factors.suspiciousDomain = 1;
+                textAnalysis.explanation += " Attention : Le domaine est hébergé sur une plateforme de blog gratuite souvent utilisée pour la désinformation.";
             }
 
             return {
@@ -140,14 +358,15 @@ class AIAnalysisService {
                 url,
                 title,
                 domain,
-                scrapedContent: content.substring(0, 500)
+                scrapedContent: content.substring(0, 500) + '...'
             };
 
         } catch (error) {
+            console.error("Error analyzing URL:", error);
             return {
                 score: 30,
                 verdict: 'douteux',
-                explanation: `Impossible d analyser le contenu de l URL : ${error.message}`,
+                explanation: `Impossible d'analyser le contenu de l'URL directement. Erreur: ${error.message}`,
                 factors: { inaccessible: 1 },
                 biasIndicators: { inaccessible: true },
                 error: error.message
@@ -160,51 +379,79 @@ class AIAnalysisService {
             const trustedSources = await TrustedSource.findAll({ isVerified: true });
             const matches = [];
 
-            for (const source of trustedSources.slice(0, 5)) { // Limiter à 5 sources
+            // In a real scenario, integrate with Google Custom Search API or similar
+            // Here we verify if we can find similar keywords in our trusted sources' RSS feeds or stored headers
+            // For now, keeping the simulation but making it clear
+
+            for (const source of trustedSources.slice(0, 5)) {
                 try {
-                    // Recherche simplifiée - en production, utiliser une API de recherche
+                    // Simulating a search query structure
                     const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(claim + ' site:' + new URL(source.url).hostname)}`;
                     matches.push({
                         source: source.name,
                         url: source.url,
-                        relevance: 0.6 + (Math.random() * 0.3) // Simulation
+                        searchLink: searchUrl,
+                        relevance: 0.5 // Default relevance as we can't really check without an API key
                     });
                 } catch (e) {
-                    // Ignorer les erreurs de recherche
+                    // Ignore
                 }
             }
 
-            return matches.sort((a, b) => b.relevance - a.relevance);
+            return matches;
         } catch (error) {
             return [];
         }
     }
 
-    static generateExplanation(score, factors, biasIndicators) {
-        if (score >= 75) {
-            return "Cette information semble fiable. Elle présente des caractéristiques d'un contenu de qualité : ton mesuré, sources mentionnées, et formulation équilibrée.";
-        } else if (score >= 50) {
-            return "Cette information est douteuse. Elle présente certains signaux d'alerte comme un langage émotionnel ou des formulations sensationnalistes. Nous recommandons une vérification croisée.";
-        } else {
-            let reasons = [];
-            if (factors.sensationalism > 0.5) reasons.push("langage sensationnaliste");
-            if (factors.emotionalLanguage > 0.5) reasons.push("ton émotionnel excessif");
-            if (factors.clickbaitIndicators > 0.3) reasons.push("techniques de clickbait");
-            if (factors.sourceMention < 0.5) reasons.push("absence de sources");
+    static generateExplanation(score, factors, biasIndicators, usedML, mlResult) {
+        let text = "";
 
-            return `Cette information semble peu fiable pour les raisons suivantes : ${reasons.join(', ')}. Nous recommandons de ne pas la partager sans vérification approfondie.`;
+        // Introduction based on verdict
+        if (score >= 75) {
+            text = "✅ Cette information semble FIABLE. ";
+        } else if (score >= 40) {
+            text = "⚠️ Cette information est DOUTEUSE. ";
+        } else {
+            text = "❌ Cette information est probablement FAUSSE. ";
         }
+
+        // ML Insight
+        if (usedML && mlResult) {
+            text += `Notre intelligence artificielle a analysé le texte avec une confiance de ${Math.round(mlResult.mlConfidence * 100)}%. `;
+            if (mlResult.mlScore > 0.8) text += "Le modèle identifie ce contenu comme factuel et informatif. ";
+            else if (mlResult.mlScore < 0.2) text += "Le modèle a détecté de forts signaux de désinformation. ";
+        }
+
+        // Specific Heuristic Warnings
+        const warnings = [];
+        if (factors.sensationalism > 0.5) warnings.push("langage sensationnaliste");
+        if (factors.emotionalLanguage > 0.6) warnings.push("ton émotionnel excessif");
+        if (factors.sourceMention < 0.1) warnings.push("absence de sources citées");
+        if (factors.clickbaitIndicators > 0.3) warnings.push("titre 'clickbait'");
+
+        if (warnings.length > 0) {
+            text += `Nous avons détecté : ${warnings.join(', ')}. `;
+        } else if (score >= 75) {
+            text += "Le ton est neutre et factuel. ";
+        }
+
+        // Recommendation
+        if (score < 50) {
+            text += "Nous recommandons fortement de vérifier cette information avec d'autres sources.";
+        }
+
+        return text;
     }
 
     static async analyzeImage(imageUrl) {
-        // En production, intégrer avec une API de reverse image search
-        // ou un service de vérification d'images
+        // Future integration: Google Vision API or similar
         return {
-            score: 50,
+            score: 50, // Neutral
             verdict: 'douteux',
-            explanation: "L'analyse d'images nécessite une intégration avec des services spécialisés. Cette fonctionnalité est en cours de développement.",
+            explanation: "L'analyse d'images n'est pas encore connectée à nos modèles de Deep Learning.",
             factors: { imageAnalysis: 0 },
-            biasIndicators: { imageAnalysis: false }
+            biasIndicators: {}
         };
     }
 }

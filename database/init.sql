@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS content_analysis (
     content_text TEXT,
     content_type ENUM('text', 'image', 'video', 'url') DEFAULT 'text',
     ai_score DECIMAL(5,2), -- Score de 0 à 100
-    ai_verdict ENUM('fiable', 'douteux', 'faux') DEFAULT 'douteux',
+    ai_verdict ENUM('fiable', 'douteux', 'faux', 'non pertinent') DEFAULT 'douteux',
     ai_explanation TEXT,
     reliability_factors JSON,
     bias_indicators JSON,

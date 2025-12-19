@@ -55,20 +55,20 @@ class TrustedSource {
 
     static async create(sourceData) {
         const { name, url, description, category, country, language, reliabilityScore, isVerified } = sourceData;
-        
+
         const [result] = await pool.execute(
             `INSERT INTO trusted_sources 
              (name, url, description, category, country, language, reliability_score, is_verified) 
              VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             [name, url, description, category, country, language, reliabilityScore || 0.85, isVerified || false]
         );
-        
+
         return this.findById(result.insertId);
     }
 
     static async update(id, updates) {
         const { name, url, description, category, country, language, reliabilityScore, isVerified } = updates;
-        
+
         const [result] = await pool.execute(
             `UPDATE trusted_sources 
              SET name = ?, url = ?, description = ?, category = ?, country = ?, 
@@ -76,7 +76,7 @@ class TrustedSource {
              WHERE id = ?`,
             [name, url, description, category, country, language, reliabilityScore, isVerified, id]
         );
-        
+
         return result.affectedRows > 0;
     }
 
@@ -103,23 +103,48 @@ class TrustedSource {
     }
 
     static async verifySource(url) {
-        const [rows] = await pool.execute(
-            `SELECT * FROM trusted_sources WHERE url LIKE ?`,
-            [`%${url}%`]
-        );
-        
-        if (rows.length > 0) {
+        try {
+            const urlObj = new URL(url);
+            const hostname = urlObj.hostname; // e.g., "www.france24.com"
+            const domain = hostname.replace('www.', ''); // e.g., "france24.com"
+
+            // Search if we have this domain in our trusted sources
+            // We check if the stored URL contains our domain
+            const [rows] = await pool.execute(
+                `SELECT * FROM trusted_sources 
+                 WHERE url LIKE ? OR url LIKE ?`,
+                [`%${domain}%`, `%${hostname}%`]
+            );
+
+            // Also refine by checking if the found source's hostname actually matches
+            const match = rows.find(row => {
+                try {
+                    const rowHost = new URL(row.url).hostname.replace('www.', '');
+                    return domain.includes(rowHost) || rowHost.includes(domain);
+                } catch (e) {
+                    return false;
+                }
+            });
+
+            if (match) {
+                return {
+                    isTrusted: true,
+                    source: match,
+                    reliabilityScore: match.reliability_score
+                };
+            }
+
             return {
-                isTrusted: true,
-                source: rows[0],
-                reliabilityScore: rows[0].reliability_score
+                isTrusted: false,
+                reliabilityScore: 0.5 // Neutral/Unknown, not necessarily bad
+            };
+        } catch (e) {
+            console.error("Error verification source:", e);
+            return {
+                isTrusted: false,
+                reliabilityScore: 0.5
             };
         }
-        
-        return {
-            isTrusted: false,
-            reliabilityScore: 0.3
-        };
     }
 }
 

@@ -20,7 +20,7 @@ export const analyzeContent = async (req, res) => {
 
         // Sauvegarder l'analyse si l'utilisateur est connecté
         let savedAnalysis = null;
-        if (userId) {
+        if (userId && !analysisResult.isIrrelevant) { // Skip saving if irrelevant
             try {
                 const factCheckSources = await AIAnalysisService.crossCheckWithTrustedSources(
                     contentText || contentUrl || ''
@@ -58,26 +58,33 @@ export const analyzeContent = async (req, res) => {
         });
     } catch (error) {
         console.error('Erreur lors de l analyse:', error);
-        res.status(500).json({ 
+        res.status(500).json({
             error: 'Erreur serveur lors de l analyse du contenu.',
-            details: error.message 
+            details: error.message
         });
     }
 };
 
 export const getUserAnalyses = async (req, res) => {
     try {
-        const { limit = 20, offset = 0 } = req.query;
+        let { limit = 20, offset = 0 } = req.query;
         const userId = req.user.id;
 
-        const analyses = await ContentAnalysis.findByUserId(userId, parseInt(limit), parseInt(offset));
+        // Safer integer parsing
+        limit = parseInt(limit);
+        offset = parseInt(offset);
+
+        if (isNaN(limit) || limit < 1) limit = 20;
+        if (isNaN(offset) || offset < 0) offset = 0;
+
+        const analyses = await ContentAnalysis.findByUserId(userId, limit, offset);
 
         res.json({
             success: true,
             analyses,
             pagination: {
-                limit: parseInt(limit),
-                offset: parseInt(offset),
+                limit,
+                offset,
                 count: analyses.length
             }
         });
@@ -118,15 +125,23 @@ export const getAllAnalyses = async (req, res) => {
             return res.status(403).json({ error: 'Accès refusé.' });
         }
 
-        const { limit = 50, offset = 0 } = req.query;
-        const analyses = await ContentAnalysis.getAll(parseInt(limit), parseInt(offset));
+        let { limit = 50, offset = 0 } = req.query;
+
+        // Safer integer parsing
+        limit = parseInt(limit);
+        offset = parseInt(offset);
+
+        if (isNaN(limit) || limit < 1) limit = 50;
+        if (isNaN(offset) || offset < 0) offset = 0;
+
+        const analyses = await ContentAnalysis.getAll(limit, offset);
 
         res.json({
             success: true,
             analyses,
             pagination: {
-                limit: parseInt(limit),
-                offset: parseInt(offset),
+                limit,
+                offset,
                 count: analyses.length
             }
         });
