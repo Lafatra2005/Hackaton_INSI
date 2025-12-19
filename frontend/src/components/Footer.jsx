@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ShieldCheck, Heart, Twitter, Facebook, Github, AlignCenter } from 'lucide-react';
+import { TreeDeciduous, Heart, Twitter, Facebook, Github, AlignCenter } from 'lucide-react';
 
 const Footer = () => {
   const { t } = useTranslation();
@@ -14,9 +14,9 @@ const Footer = () => {
           {/* Brand */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
-              <ShieldCheck className="h-8 w-8 text-primary-600" />
+              <TreeDeciduous className="h-8 w-8 text-primary-600" />
               <div>
-                <h3 className="text-lg font-bold text-gray-900">Education</h3>
+                <h3 className="text-lg font-bold text-gray-900">AfricaLearn</h3>
                 <p className="text-sm text-gray-500">{t('footer.slogan')}</p>
               </div>
             </div>

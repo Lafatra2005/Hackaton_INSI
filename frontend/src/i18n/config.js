@@ -20,7 +20,7 @@ const resources = {
         register: "S'inscrire"
       },
       header: {
-        title: 'Education',
+        title: 'AfricaLearn',
         subtitle: 'Lutter contre la désinformation'
       },
       home: {
@@ -61,8 +61,8 @@ const resources = {
           countries: 'Pays africains'
         },
         challenges: {
-          title: 'Axes du Hackathon INSI',
-          subtitle: 'Des défis conçus pour stimuler l\'innovation et l\'engagement des jeunes',
+          title: 'Des défis conçus pour stimuler l\'innovation et l\'engagement des jeunes',
+          subtitle: 'Découvrez les trois axes thématiques au cœur de notre projet',
           fakeNews: {
             title: 'Détection de Fake News',
             description: 'Identifier et signaler les contenus trompeurs avec l\'aide de l\'IA',
@@ -89,7 +89,7 @@ const resources = {
       },
       about: {
         hero: {
-          title: 'À propos d\'Education',
+          title: 'À propos d\'AfricaLearn',
           subtitle: 'Jeunesse, Intelligence Artificielle et Numérique pour une éducation critique, inclusive et responsable en Afrique'
         },
         mission: {
@@ -379,7 +379,7 @@ const resources = {
         register: 'Register'
       },
       header: {
-        title: 'Education',
+        title: 'AfricaLearn',
         subtitle: 'Fight against disinformation'
       },
       home: {
@@ -448,7 +448,7 @@ const resources = {
       },
       about: {
         hero: {
-          title: 'About Education',
+          title: 'About AfricaLearn',
           subtitle: 'Youth, Artificial Intelligence and Digital for Critical, Inclusive and Responsible Education in Africa'
         },
         mission: {
@@ -739,7 +739,7 @@ const resources = {
         register: 'Hisoratra'
       },
       header: {
-        title: 'Education',
+        title: 'AfricaLearn',
         subtitle: 'Miady amin ny disinformation'
       },
       home: {

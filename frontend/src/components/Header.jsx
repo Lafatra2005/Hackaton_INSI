@@ -7,7 +7,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 import {
   Menu,
   X,
-  ShieldCheck,
+  TreeDeciduous,
   User,
   LogOut,
   LayoutDashboard,
@@ -47,7 +47,7 @@ const Header = () => {
         <div className="flex items-center justify-between h-16">
           {/* GAUCHE : logo + titre */}
           <Link to="/" className="flex items-center space-x-3">
-            <ShieldCheck className="h-8 w-8 text-primary-600" />
+            <TreeDeciduous className="h-8 w-8 text-primary-600" />
             <div>
               <h1 className="text-xl font-bold text-gray-900">{t('header.title')}</h1>
               <p className="text-xs text-gray-500">{t('header.subtitle')}</p>
