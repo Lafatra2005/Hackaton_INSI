@@ -3,16 +3,13 @@ import pool from '../../config/database.js';
 
 const router = express.Router();
 
-// Get global stats
 router.get('/', async (req, res) => {
     try {
-        // Count total analyses
+        
         const [analysesCount] = await pool.query('SELECT COUNT(*) as count FROM content_analysis');
 
-        // Count total users
         const [usersCount] = await pool.query('SELECT COUNT(*) as count FROM users');
 
-        // Count total trusted sources
         const [sourcesCount] = await pool.query('SELECT COUNT(*) as count FROM trusted_sources');
 
         res.json({

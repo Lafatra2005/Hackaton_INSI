@@ -11,7 +11,7 @@ import { authenticateToken } from '../middleware/auth.js';
 const router = express.Router();
 
 router.get('/', getAllQuizzes);
-router.get('/:id', authenticateToken, getQuizById); // Added auth to enable session storage
+router.get('/:id', authenticateToken, getQuizById); 
 router.post('/submit', authenticateToken, submitQuiz);
 router.get('/results/my-results', authenticateToken, getUserResults);
 router.get('/progress/my-progress', authenticateToken, getUserProgress);

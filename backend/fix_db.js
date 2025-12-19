@@ -4,7 +4,6 @@ async function migrate() {
     try {
         console.log('Starting migration...');
 
-        // 1. Update ENUM for ai_verdict to include 'non pertinent'
         console.log('Updating ai_verdict ENUM...');
         await pool.query(`
             ALTER TABLE content_analysis 

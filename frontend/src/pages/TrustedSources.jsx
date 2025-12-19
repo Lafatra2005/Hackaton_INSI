@@ -59,7 +59,7 @@ const TrustedSources = () => {
   const filterSources = () => {
     let filtered = sources;
 
-    // Filter by search term
+    // Filter by term
     if (searchTerm) {
       filtered = filtered.filter(source =>
         source.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -300,7 +300,7 @@ const TrustedSources = () => {
         </div>
       )}
 
-      {/* Statistics */}
+      {/* Statistic*/}
       <div className="mt-12 card">
         <div className="card-body">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">

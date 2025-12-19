@@ -43,9 +43,7 @@ const Header = () => {
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* LIGNE PRINCIPALE : tout aligné verticalement */}
         <div className="flex items-center justify-between h-16">
-          {/* GAUCHE : logo + titre */}
           <Link to="/" className="flex items-center space-x-3">
             <TreeDeciduous className="h-8 w-8 text-primary-600" />
             <div>
@@ -54,7 +52,6 @@ const Header = () => {
             </div>
           </Link>
 
-          {/* CENTRE : navigation desktop */}
           <nav className="hidden md:flex items-center space-x-6">
             {navigation.map((item) => (
               <Link
@@ -83,7 +80,6 @@ const Header = () => {
             )}
           </nav>
 
-          {/* DROITE : langue + profil/menu */}
           <div className="flex items-center space-x-4">
             <LanguageSwitcher />
 
@@ -151,7 +147,6 @@ const Header = () => {
               </div>
             )}
 
-            {/* Bouton menu mobile */}
             <div className="md:hidden">
               <button
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -163,7 +158,6 @@ const Header = () => {
           </div>
         </div>
 
-        {/* MENU MOBILE (facultatif mais propre) */}
         {isMenuOpen && (
           <div className="md:hidden border-t border-gray-200 py-4">
             <div className="flex flex-col space-y-3">

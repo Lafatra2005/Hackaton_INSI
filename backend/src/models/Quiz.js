@@ -6,7 +6,6 @@ const decodeHTML = (html) => {
     return html.replace(/&quot;|&#039;|&amp;|&lt;|&gt;|&rsquo;|&ldquo;|&rdquo;/g, m => map[m]);
 };
 
-// Translation using MyMemory API (10k requests/day - more reliable)
 const translateText = async (text, targetLang) => {
     if (!text || targetLang === 'en') return text;
 
@@ -25,7 +24,6 @@ const translateText = async (text, targetLang) => {
     }
 };
 
-// Translate entire quiz
 const translateQuiz = async (quiz, lang) => {
     if (!quiz || !lang || lang === 'en') return quiz;
 
@@ -51,7 +49,6 @@ const translateQuiz = async (quiz, lang) => {
     };
 };
 
-// In-memory session cache: Map<userId, { quizId, questions }>
 const activeSessions = new Map();
 
 class Quiz {
@@ -59,7 +56,6 @@ class Quiz {
         const difficulty = filters.difficulty || 'intermediaire';
         const lang = filters.lang || 'fr';
 
-        // Quiz titles based on language (ignore category filter - not compatible with OpenTDB)
         const titles = {
             fr: [
                 { id: 18, title: "Informatique & Tech", description: "Testez vos connaissances en informatique." },
@@ -95,7 +91,6 @@ class Quiz {
         try {
             console.log(`[Quiz] Fetching quiz ${id} for user ${userId}`);
 
-            // Check cache first
             if (userId) {
                 const existingSession = activeSessions.get(String(userId));
                 if (existingSession && existingSession.quizId === id) {
@@ -116,7 +111,6 @@ class Quiz {
             const diffMap = { 'debutant': 'easy', 'intermediaire': 'medium', 'avance': 'hard' };
             const apiDiff = diffMap[difficulty] || difficulty || 'hard';
 
-            // Fetch from OpenTDB
             const apiUrl = `https://opentdb.com/api.php?amount=10&category=${id}&difficulty=${apiDiff}&type=multiple`;
             const response = await fetch(apiUrl);
             const data = await response.json();
@@ -143,13 +137,11 @@ class Quiz {
                 questions: questions
             };
 
-            // Translate if needed (FR or MG)
             if (lang && lang !== 'en') {
                 console.log(`[Quiz] Translating quiz to ${lang}...`);
                 quiz = await translateQuiz(quiz, lang);
             }
 
-            // Store TRANSLATED version in cache
             if (userId) {
                 console.log(`[Quiz] Storing translated session`);
                 activeSessions.set(String(userId), {
@@ -203,8 +195,6 @@ class Quiz {
 
         const score = Math.round((correct / total) * 100);
 
-        // Optional: Clear session or keep it? 
-        // activeSessions.delete(String(userId)); 
 
         return { score, totalQuestions: total, correctAnswers: correct, answers: detailed };
     }
@@ -241,10 +231,7 @@ class Quiz {
         return { id, ...quiz };
     }
 
-    // Fonctions résultats BDD
     static async submitResult(userId, quizId, answers, score, maxScore, timeSpent) {
-        // Don't save to database - dynamic quiz IDs don't exist in quizzes table
-        // This would require creating quiz records first or using a different approach
         console.log(`[Quiz] Result: User ${userId} scored ${score}% on quiz ${quizId}`);
         return { score };
     }

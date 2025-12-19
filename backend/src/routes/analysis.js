@@ -11,14 +11,11 @@ import { authenticateToken, optionalAuth, authorizeRoles } from '../middleware/a
 
 const router = express.Router();
 
-// Route pour analyser du contenu (authentification optionnelle)
 router.post('/analyze', optionalAuth, validateContentAnalysis, analyzeContent);
 
-// Routes protégées
 router.get('/my-analyses', authenticateToken, getUserAnalyses);
 router.get('/analysis/:id', authenticateToken, getAnalysisById);
 
-// Routes admin
 router.get('/all-analyses', authenticateToken, authorizeRoles('admin'), getAllAnalyses);
 router.get('/stats', authenticateToken, authorizeRoles('admin'), getAnalysisStats);
 

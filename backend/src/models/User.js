@@ -45,7 +45,6 @@ class User {
     static async updateProfile(id, updates) {
         const { fullName, bio, country, language, avatarUrl } = updates;
 
-        // ✅ Empêche l’erreur MySQL2 : undefined → null
         const safe = value => value === undefined ? null : value;
         
         const [result] = await pool.execute(

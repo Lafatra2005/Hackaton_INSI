@@ -26,7 +26,6 @@ const Home = () => {
   ]);
 
   useEffect(() => {
-    // Fetch real stats from API
     const fetchStats = async () => {
       try {
         const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -140,7 +139,6 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Wave SVG */}
         <div className="absolute bottom-0 left-0 right-0">
           <svg viewBox="0 0 1200 120" preserveAspectRatio="none" className="w-full h-20 fill-white">
             <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z"></path>
@@ -238,7 +236,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="py-20 bg-primary-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">

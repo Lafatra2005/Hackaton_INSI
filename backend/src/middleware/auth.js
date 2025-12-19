@@ -50,7 +50,6 @@ export const optionalAuth = async (req, res, next) => {
             const user = await User.findById(decoded.userId);
             req.user = user;
         } catch (error) {
-            // Ignorer les erreurs de token optionnel
         }
     }
     

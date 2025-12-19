@@ -5,13 +5,11 @@ export const getUserStats = async (req, res) => {
     try {
         const userId = req.user.id;
 
-        // Count analyses
         const [analysesCount] = await pool.query(
             'SELECT COUNT(*) as count FROM content_analysis WHERE user_id = ?',
             [userId]
         );
 
-        // Count quiz results (from quiz_results table if it exists, or set to 0)
         let quizzesCount = [{ count: 0 }];
         try {
             const [quizResults] = await pool.query(
@@ -20,11 +18,9 @@ export const getUserStats = async (req, res) => {
             );
             quizzesCount = quizResults;
         } catch (e) {
-            // Quiz results table might not exist or be empty
             console.log('Quiz results not available:', e.message);
         }
 
-        // Calculate average analysis score
         const [avgScore] = await pool.query(
             'SELECT AVG(ai_score) as avg FROM content_analysis WHERE user_id = ?',
             [userId]

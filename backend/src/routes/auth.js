@@ -9,7 +9,6 @@ const router = express.Router();
 router.post('/register', validateRegister, register);
 router.post('/login', validateLogin, login);
 
-// Protected routes
 router.get('/profile', authenticateToken, getProfile);
 router.put('/profile', authenticateToken, updateProfile);
 router.get('/stats', authenticateToken, getUserStats);

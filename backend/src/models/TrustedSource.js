@@ -105,18 +105,15 @@ class TrustedSource {
     static async verifySource(url) {
         try {
             const urlObj = new URL(url);
-            const hostname = urlObj.hostname; // e.g., "www.france24.com"
-            const domain = hostname.replace('www.', ''); // e.g., "france24.com"
+            const hostname = urlObj.hostname;
+            const domain = hostname.replace('www.', ''); 
 
-            // Search if we have this domain in our trusted sources
-            // We check if the stored URL contains our domain
             const [rows] = await pool.execute(
                 `SELECT * FROM trusted_sources 
                  WHERE url LIKE ? OR url LIKE ?`,
                 [`%${domain}%`, `%${hostname}%`]
             );
 
-            // Also refine by checking if the found source's hostname actually matches
             const match = rows.find(row => {
                 try {
                     const rowHost = new URL(row.url).hostname.replace('www.', '');
@@ -134,7 +131,6 @@ class TrustedSource {
                 };
             }
 
-            // Fallback: Check hardcoded authoritative domains if not in DB
             const authoritativeDomains = [
                 'unesco.org', 'un.org', 'who.int', 'gov', 'edu', 'europa.eu',
                 'nasa.gov', 'cnrs.fr', 'nature.com', 'science.org',
@@ -152,7 +148,7 @@ class TrustedSource {
 
             return {
                 isTrusted: false,
-                reliabilityScore: 0.5 // Neutral/Unknown, not necessarily bad
+                reliabilityScore: 0.5 
             };
         } catch (e) {
             console.error("Error verification source:", e);

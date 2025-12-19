@@ -4,10 +4,8 @@ export const getQuizById = async (req, res) => {
     try {
         const { id } = req.params;
         const { difficulty } = req.query;
-        // Detect language from query or header (frontend sends via i18next)
         const lang = req.query.lang || req.headers['accept-language']?.split(',')[0]?.split('-')[0] || 'fr';
 
-        // Pass userId to enable session caching and lang for translation
         const quiz = await Quiz.findById(id, difficulty, req.user ? req.user.id : null, lang);
 
         if (!quiz) {
@@ -22,7 +20,6 @@ export const getQuizById = async (req, res) => {
 
 export const getAllQuizzes = async (req, res) => {
     try {
-        // Detect language for quiz titles
         const lang = req.query.lang || req.headers['accept-language']?.split(',')[0]?.split('-')[0] || 'fr';
         const quizzes = await Quiz.findAll({ ...req.query, lang });
         res.json({ success: true, quizzes });
@@ -33,14 +30,12 @@ export const submitQuiz = async (req, res) => {
     try {
         const { quizId, answers, timeSpent } = req.body;
 
-        // Use the new verification method that checks against session cache
         const result = Quiz.verifyAnswers(req.user.id, answers);
 
         if (result.error) {
             return res.status(400).json({ error: result.error });
         }
 
-        // Save result to database
         await Quiz.submitResult(
             req.user.id,
             quizId,

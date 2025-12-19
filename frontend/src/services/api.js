@@ -2,7 +2,6 @@ import axios from 'axios';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Create axios instance
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -10,7 +9,6 @@ const api = axios.create({
   },
 });
 
-// Request interceptor
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
@@ -18,7 +16,6 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
-    // Add current language to quiz requests
     if (config.url?.includes('/quizzes')) {
       const currentLang = localStorage.getItem('i18nextLng') || 'fr';
       const lang = currentLang.split('-')[0]; // Extract 'fr' from 'fr-FR'
@@ -32,7 +29,6 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor
 api.interceptors.response.use(
   (response) => {
     return response;
@@ -46,7 +42,6 @@ api.interceptors.response.use(
   }
 );
 
-// Auth API
 export const authAPI = {
   login: (credentials) => api.post('/auth/login', credentials),
   register: (userData) => api.post('/auth/register', userData),
@@ -55,7 +50,6 @@ export const authAPI = {
   logout: () => api.post('/auth/logout'),
 };
 
-// Analysis API
 export const analysisAPI = {
   analyzeContent: (data) => api.post('/analysis/analyze', data),
   getUserAnalyses: (params) => api.get('/analysis/my-analyses', { params }),
@@ -63,7 +57,6 @@ export const analysisAPI = {
   getStats: () => api.get('/analysis/stats'),
 };
 
-// Quiz API
 export const quizAPI = {
   getAllQuizzes: (params) => api.get('/quizzes', { params }),
   getQuizById: (id) => api.get(`/quizzes/${id}`),
@@ -73,7 +66,6 @@ export const quizAPI = {
   createQuiz: (data) => api.post('/quizzes', data),
 };
 
-// Trusted Sources API
 export const trustedSourceAPI = {
   getAllSources: (params) => api.get('/trusted-sources', { params }),
   getCategories: () => api.get('/trusted-sources/categories'),

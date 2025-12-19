@@ -164,7 +164,7 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Recent Analyses */}
+        {/* Analyse recent*/}
         <div className="card">
           <div className="card-body">
             <div className="flex items-center justify-between mb-4">

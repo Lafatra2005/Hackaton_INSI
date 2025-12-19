@@ -2,7 +2,7 @@ import pool from '../../config/database.js';
 
 const parseJSON = (field) => {
     if (!field) return {};
-    if (typeof field === 'object') return field; // Already parsed by driver
+    if (typeof field === 'object') return field; 
     try {
         return JSON.parse(field);
     } catch (e) {
@@ -76,7 +76,6 @@ class ContentAnalysis {
     }
 
     static async findByUserId(userId, limit = 20, offset = 0) {
-        // Use pool.query instead of execute for better compatibility with LIMIT/OFFSET params
         const [rows] = await pool.query(
             `SELECT ca.*, u.username 
              FROM content_analysis ca 

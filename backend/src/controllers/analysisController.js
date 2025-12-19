@@ -11,7 +11,6 @@ export const analyzeContent = async (req, res) => {
         if (contentType === 'url' && contentUrl) {
             analysisResult = await AIAnalysisService.analyzeURL(contentUrl);
         } else if (contentType === 'video' && contentUrl) {
-            // Treat video URLs like regular URLs (analyze the page content)
             analysisResult = await AIAnalysisService.analyzeURL(contentUrl);
         } else if (contentType === 'text' && contentText) {
             analysisResult = await AIAnalysisService.analyzeText(contentText);
@@ -21,9 +20,8 @@ export const analyzeContent = async (req, res) => {
             return res.status(400).json({ error: 'Type de contenu ou données invalides.' });
         }
 
-        // Sauvegarder l'analyse si l'utilisateur est connecté
         let savedAnalysis = null;
-        if (userId && !analysisResult.isIrrelevant) { // Skip saving if irrelevant
+        if (userId && !analysisResult.isIrrelevant) { 
             try {
                 const factCheckSources = await AIAnalysisService.crossCheckWithTrustedSources(
                     contentText || contentUrl || ''
@@ -43,7 +41,6 @@ export const analyzeContent = async (req, res) => {
                 });
             } catch (saveError) {
                 console.error('Erreur lors de la sauvegarde de l analyse:', saveError);
-                // Ne pas bloquer la réponse si la sauvegarde échoue
             }
         }
 
@@ -73,7 +70,6 @@ export const getUserAnalyses = async (req, res) => {
         let { limit = 20, offset = 0 } = req.query;
         const userId = req.user.id;
 
-        // Safer integer parsing
         limit = parseInt(limit);
         offset = parseInt(offset);
 
@@ -106,7 +102,6 @@ export const getAnalysisById = async (req, res) => {
             return res.status(404).json({ error: 'Analyse non trouvée.' });
         }
 
-        // Vérifier que l'utilisateur peut voir cette analyse
         if (req.user.role !== 'admin' && analysis.user_id !== req.user.id) {
             return res.status(403).json({ error: 'Accès refusé.' });
         }
@@ -123,14 +118,12 @@ export const getAnalysisById = async (req, res) => {
 
 export const getAllAnalyses = async (req, res) => {
     try {
-        // Seulement pour les admins
         if (req.user.role !== 'admin') {
             return res.status(403).json({ error: 'Accès refusé.' });
         }
 
         let { limit = 50, offset = 0 } = req.query;
 
-        // Safer integer parsing
         limit = parseInt(limit);
         offset = parseInt(offset);
 

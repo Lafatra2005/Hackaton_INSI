@@ -113,7 +113,7 @@ const Analysis = () => {
           <div className="card-body">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('analysis.inputTitle')}</h2>
 
-            {/* Content Type Selector */}
+            
             <div className="mb-6">
               <div className="flex flex-wrap gap-2 bg-gray-100 p-1 rounded-lg">
                 {[
@@ -249,10 +249,9 @@ const Analysis = () => {
                   <p className="text-sm">{analysisResult.explanation}</p>
                 </div>
                 
-                {/* Enhanced Details Section - Always show key info */}
                 {analysisResult.details && (
                   <div className="space-y-4">
-                    {/* Detected Issues */}
+                    {/* Detection */}
                     {analysisResult.details.issues_detected && analysisResult.details.issues_detected.length > 0 && (
                       <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
                         <div className="flex items-center mb-2">
@@ -278,7 +277,6 @@ const Analysis = () => {
                       </div>
                     )}
 
-                    {/* Source Reliability - Only if comes from a trusted source */}
                     {analysisResult.details.source_reliability && analysisResult.details.source_reliability > 0.7 && (
                       <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                         <div className="flex items-center mb-2">

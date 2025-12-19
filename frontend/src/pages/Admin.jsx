@@ -65,7 +65,7 @@ const Admin = () => {
         </p>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats_Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div className="card">
           <div className="card-body">
@@ -125,7 +125,7 @@ const Admin = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Recent Activity */}
+        {/* Activité_récent */}
         <div className="card">
           <div className="card-body">
             <div className="flex items-center mb-4">
@@ -181,7 +181,7 @@ const Admin = () => {
           </div>
         </div>
 
-        {/* Quick Actions */}
+        {/* Action rapide */}
         <div className="card">
           <div className="card-body">
             <div className="flex items-center mb-4">
@@ -216,7 +216,6 @@ const Admin = () => {
         </div>
       </div>
 
-      {/* System Status */}
       <div className="mt-8 card">
         <div className="card-body">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">

@@ -11,7 +11,6 @@ const Footer = () => {
     <footer className="bg-white border-t border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="center">
-          {/* Brand */}
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
               <TreeDeciduous className="h-8 w-8 text-primary-600" />
@@ -49,7 +48,6 @@ const Footer = () => {
         </div>
       </div>
 
-      {/* SDG Banner */}
       <div className="bg-primary-600 text-white py-3">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">

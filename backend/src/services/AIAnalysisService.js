@@ -7,14 +7,11 @@ import { HfInference } from '@huggingface/inference';
 import TrustedSource from '../models/TrustedSource.js';
 
 const sentiment = new Sentiment();
-
-// Lazy initialization for HfInference to ensure dotenv is loaded
 let hf;
 
 class AIAnalysisService {
     /**
-     * Helper to classify text using Hugging Face models
-     * @param {string} text - The text to analyze
+     * @param {string} text 
      */
     static async analyzeWithHF(text) {
         try {
@@ -23,24 +20,18 @@ class AIAnalysisService {
                 return null;
             }
 
-            // Initialize client if not exists
             if (!hf) {
                 hf = new HfInference(process.env.HF_TOKEN);
             }
 
-            // Clean text for better inference
             const cleanText = text.substring(0, 512);
 
-            // 1. Zero-Shot Classification (More robust/available than specific fine-tunes)
-            // We use standard BART-large-mnli which is almost always available
             const zeroShotResult = await hf.zeroShotClassification({
                 model: 'facebook/bart-large-mnli',
                 inputs: cleanText,
                 parameters: { candidate_labels: ['reliable fact-based news', 'fake news formulation', 'emotional opinion', 'satire'] }
             });
 
-            // 2. Sentiment/Bias Model (keeping this as it's standard)
-            // If this fails, we catch the error below, so it's safer
             let sentimentResult = null;
             try {
                 sentimentResult = await hf.textClassification({
@@ -51,8 +42,6 @@ class AIAnalysisService {
                 console.warn('Sentiment model failed, continuing with just zero-shot', err.message);
             }
 
-            // Process Scores
-            // zeroShotResult.labels and zeroShotResult.scores are aligned arrays
             const getScore = (label) => {
                 const index = zeroShotResult.labels.indexOf(label);
                 return index !== -1 ? zeroShotResult.scores[index] : 0;
@@ -60,17 +49,12 @@ class AIAnalysisService {
 
             const reliableScore = getScore('reliable fact-based news');
             const fakeScore = getScore('fake news formulation');
-
-            // Calculate final ML reliability score (0-1)
-            // We prioritize reliable score but penalize for fake signals
             let mlScore = reliableScore;
 
-            // If fake score is significantly higher, pull it down
             if (fakeScore > reliableScore) {
                 mlScore = 1 - fakeScore;
             }
 
-            // Process Sentiment if available
             let sentimentLabel = 'neutral';
             if (sentimentResult) {
                 const topSentiment = sentimentResult.reduce((prev, current) =>
@@ -80,10 +64,10 @@ class AIAnalysisService {
             }
 
             return {
-                mlScore: mlScore, // 0-1
-                mlConfidence: Math.max(reliableScore, fakeScore), // How sure the model is of its main decision
+                mlScore: mlScore, 
+                mlConfidence: Math.max(reliableScore, fakeScore), 
                 sentiment: sentimentLabel,
-                classification: zeroShotResult.labels[0], // Top category
+                classification: zeroShotResult.labels[0], 
                 rawResults: {
                     zeroShot: zeroShotResult,
                     sentiment: sentimentResult
@@ -92,13 +76,13 @@ class AIAnalysisService {
 
         } catch (error) {
             console.error('Hugging Face Inference Error:', error.message);
-            return null; // Fallback to heuristics
+            return null;
         }
     }
 
     static async analyzeText(text) {
         const startTime = Date.now();
-        // --- Heuristics Analysis (Legacy) ---
+        
         const factors = {
             sensationalism: 0,
             emotionalLanguage: 0,
@@ -115,11 +99,10 @@ class AIAnalysisService {
             unsupportedClaims: []
         };
 
-        // Sentiment Analysis (Heuristic)
+        
         const sentimentResult = sentiment.analyze(text);
         factors.emotionalLanguage = Math.min(Math.abs(sentimentResult.score) / 10, 1);
 
-        // Sensational Words
         const sensationalWords = [
             'choquant', 'incroyable', 'époustouflant', 'révolutionnaire', 'scandale',
             'urgent', 'exclusif', 'briseur', 'sensationnel', 'dramatique',
@@ -133,17 +116,14 @@ class AIAnalysisService {
         biasIndicators.sensationalWords = foundSensationalWords;
         factors.sensationalism = Math.min(foundSensationalWords.length / 3, 1);
 
-        // Grammar/Caps Check
         const excessiveCaps = (text.match(/[A-Z]{4,}/g) || []).length;
         factors.clickbaitIndicators = Math.min(excessiveCaps / 5, 1);
 
-        // Source Mentions
         const sourceKeywords = ['selon', 'source:', 'd\'après', 'rapporte', 'étude', 'recherche', 'afp', 'reuters'];
         factors.sourceMention = sourceKeywords.some(keyword =>
             text.toLowerCase().includes(keyword.toLowerCase())
         ) ? 0.8 : 0;
 
-        // Calculate Heuristic Score (0-100)
         let heuristicScore = 50;
         heuristicScore -= factors.sensationalism * 25;
         heuristicScore -= factors.emotionalLanguage * 15;
@@ -151,7 +131,6 @@ class AIAnalysisService {
         heuristicScore += factors.sourceMention * 20;
         heuristicScore = Math.max(0, Math.min(100, heuristicScore));
 
-        // --- ML Analysis (Hugging Face) ---
         const mlResult = await this.analyzeWithHF(text);
 
         let finalScore = heuristicScore;
@@ -159,32 +138,24 @@ class AIAnalysisService {
 
         if (mlResult) {
             usedML = true;
-            // Normalize ML score (0-1) to (0-100)
             const mlScore100 = mlResult.mlScore * 100;
-
-            // Combine: Heuristics 40% + ML 60% (giving more weight to ML if available)
-            // Or as requested: average match
             finalScore = (heuristicScore + mlScore100) / 2;
 
-            // Adjust bias indicators based on ML sentiment
             if (mlResult.sentiment === 'negative' && factors.emotionalLanguage < 0.5) {
-                factors.emotionalLanguage = 0.6; // Bump up if ML detects negativity
+                factors.emotionalLanguage = 0.6; 
             }
         }
 
-        // Final Verdict
         let verdict = 'douteux';
         if (finalScore >= 75) verdict = 'fiable';
         else if (finalScore <= 35) verdict = 'faux';
 
-        // Specific Heuristic Warnings (moved here to be available for details)
         const warnings = [];
         if (factors.sensationalism > 0.5) warnings.push("langage sensationnaliste");
         if (factors.emotionalLanguage > 0.6) warnings.push("ton émotionnel excessif");
         if (factors.sourceMention < 0.1) warnings.push("absence de sources citées");
         if (factors.clickbaitIndicators > 0.3) warnings.push("titre 'clickbait'");
 
-        // Generate Explanation
         const explanation = this.generateExplanation(finalScore, factors, biasIndicators, usedML, mlResult, warnings);
 
         return {
@@ -196,7 +167,7 @@ class AIAnalysisService {
             confidence_score: mlResult ? mlResult.mlConfidence : (finalScore / 100),
             analysis_time_ms: Date.now() - startTime,
             details: {
-                source_reliability: null, // This field is more relevant for analyzeURL
+                source_reliability: null,
                 issues_detected: warnings.length > 0 ? warnings : ['Aucun problème majeur détecté'],
                 recommendations: finalScore < 50 ? "Nous recommandons de vérifier cette information avec d'autres sources fiables." : "Cette analyse semble fiable, mais restez vigilant."
             }
@@ -204,7 +175,7 @@ class AIAnalysisService {
     }
 
     /**
-     * Helper to validate URL before processing
+     
      * @param {string} url 
      */
     static validateURL(url) {
@@ -213,12 +184,11 @@ class AIAnalysisService {
             const domain = urlObj.hostname.toLowerCase();
             const path = urlObj.pathname.toLowerCase();
 
-            // 1. Blocklist of non-news/irrelevant domains
             const blocklist = [
                 'github.com', 'gitlab.com', 'bitbucket.org', 'sourceforge.net',
                 'stackoverflow.com', 'npmjs.com', 'pypi.org',
                 'linkedin.com', 'facebook.com', 'twitter.com', 'instagram.com',
-                'youtube.com', 'tiktok.com', // Video platforms require different handling
+                'youtube.com', 'tiktok.com', 
                 'localhost', '127.0.0.1'
             ];
 
@@ -229,12 +199,11 @@ class AIAnalysisService {
                 };
             }
 
-            // 2. Extension Check
             const ignoredExtensions = [
                 '.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx',
                 '.zip', '.rar', '.tar', '.gz', '.7z',
                 '.exe', '.apk', '.dmg', '.iso',
-                '.jpg', '.jpeg', '.png', '.gif', '.svg', // Images should use analyzeImage
+                '.jpg', '.jpeg', '.png', '.gif', '.svg', 
                 '.mp3', '.mp4', '.avi', '.mov',
                 '.css', '.js', '.json', '.xml', '.sql', '.git'
             ];
@@ -253,7 +222,7 @@ class AIAnalysisService {
     }
 
     /**
-     * Helper to validate scraped content
+     
      * @param {string} content 
      */
     static validateContent(content) {
@@ -264,7 +233,6 @@ class AIAnalysisService {
             };
         }
 
-        // Check for code density (if > 30% of lines end with ; { } or look like code)
         const lines = content.split('\n');
         const codeLines = lines.filter(line =>
             line.trim().endsWith(';') ||
@@ -288,7 +256,6 @@ class AIAnalysisService {
     static async analyzeURL(url) {
         const startTime = Date.now();
         try {
-            // 0. Pre-validation
             const validation = this.validateURL(url);
             if (!validation.isValid) {
                 return {
@@ -308,10 +275,8 @@ class AIAnalysisService {
                 };
             }
 
-            // 1. Trusted Source Check
             const sourceCheck = await TrustedSource.verifySource(url);
 
-            // Si la source est dans la liste de confiance
             if (sourceCheck && sourceCheck.isTrusted) {
                 return {
                     score: 95 + (Math.random() * 5),
@@ -329,7 +294,6 @@ class AIAnalysisService {
                 };
             }
 
-            // 2. Scrape Content
             const response = await axios.get(url, {
                 timeout: 10000,
                 headers: {
@@ -342,14 +306,11 @@ class AIAnalysisService {
             const title = $('title').text() || $('h1').first().text() || '';
             const description = $('meta[name="description"]').attr('content') || '';
 
-            // Improve content extraction
-            // Remove scripts, styles, navs to get clean text
             $('script, style, nav, footer, header, aside, code, pre').remove(); // Added code, pre removal
             const content = $('article').text() || $('main').text() || $('body').text();
 
             const fullText = `${title}. ${description}. ${content}`.replace(/\s+/g, ' ').trim();
 
-            // 3. Post-validation (Content)
             const contentValidation = this.validateContent(content); // Check body content mainly
             if (!contentValidation.isValid) {
                 return {
@@ -362,10 +323,8 @@ class AIAnalysisService {
                 };
             }
 
-            // 4. Analyze Content (Heuristic + ML)
             const textAnalysis = await this.analyzeText(fullText.substring(0, 3000));
 
-            // 5. Domain Reputation Check
             const domain = new URL(url).hostname;
             const suspiciousDomains = ['.wordpress.com', '.blogspot.com', 'foireux.com']; // Add real ones
             const isSuspiciousDomain = suspiciousDomains.some(d => domain.includes(d));
@@ -410,22 +369,18 @@ class AIAnalysisService {
             const trustedSources = await TrustedSource.findAll({ isVerified: true });
             const matches = [];
 
-            // In a real scenario, integrate with Google Custom Search API or similar
-            // Here we verify if we can find similar keywords in our trusted sources' RSS feeds or stored headers
-            // For now, keeping the simulation but making it clear
 
             for (const source of trustedSources.slice(0, 5)) {
                 try {
-                    // Simulating a search query structure
                     const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(claim + ' site:' + new URL(source.url).hostname)}`;
                     matches.push({
                         source: source.name,
                         url: source.url,
                         searchLink: searchUrl,
-                        relevance: 0.5 // Default relevance as we can't really check without an API key
+                        relevance: 0.5 
                     });
                 } catch (e) {
-                    // Ignore
+                    
                 }
             }
 
@@ -438,7 +393,7 @@ class AIAnalysisService {
     static generateExplanation(score, factors, biasIndicators, usedML, mlResult, warnings = []) {
         let text = "";
 
-        // Introduction based on verdict
+      
         if (score >= 75) {
             text = "✅ Cette information semble FIABLE. ";
         } else if (score >= 40) {
@@ -447,21 +402,16 @@ class AIAnalysisService {
             text = "❌ Cette information est probablement FAUSSE. ";
         }
 
-        // ML Insight
         if (usedML && mlResult) {
             text += `Notre intelligence artificielle a analysé le texte avec une confiance de ${Math.round(mlResult.mlConfidence * 100)}%. `;
             if (mlResult.mlScore > 0.8) text += "Le modèle identifie ce contenu comme factuel et informatif. ";
             else if (mlResult.mlScore < 0.2) text += "Le modèle a détecté de forts signaux de désinformation. ";
         }
-
-        // Specific Heuristic Warnings
         if (warnings.length > 0) {
             text += `Nous avons détecté : ${warnings.join(', ')}. `;
         } else if (score >= 75) {
             text += "Le ton est neutre et factuel. ";
         }
-
-        // Recommendation
         if (score < 50) {
             text += "Nous recommandons fortement de vérifier cette information avec d'autres sources.";
         }
@@ -470,9 +420,9 @@ class AIAnalysisService {
     }
 
     static async analyzeImage(imageUrl) {
-        // Future integration: Google Vision API or similar
+        
         return {
-            score: 50, // Neutral
+            score: 50, 
             verdict: 'douteux',
             explanation: "L'analyse d'images n'est pas encore connectée à nos modèles de Deep Learning.",
             factors: { imageAnalysis: 0 },

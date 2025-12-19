@@ -11,7 +11,7 @@ export const register = async (req, res) => {
     try {
         const { username, email, password, fullName, country, language } = req.body;
 
-        // Vérifier si l'utilisateur existe déjà
+        
         const existingUser = await User.findByEmail(email);
         if (existingUser) {
             return res.status(400).json({ error: 'Un utilisateur avec cet email existe déjà.' });
@@ -22,7 +22,7 @@ export const register = async (req, res) => {
             return res.status(400).json({ error: 'Ce nom d utilisateur est déjà pris.' });
         }
 
-        // Créer l'utilisateur
+      
         const user = await User.create({
             username,
             email,
@@ -57,13 +57,11 @@ export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Trouver l'utilisateur
         const user = await User.findByEmail(email);
         if (!user) {
             return res.status(401).json({ error: 'Email ou mot de passe incorrect.' });
         }
 
-        // Vérifier le mot de passe
         const isPasswordValid = await User.verifyPassword(password, user.password_hash);
         if (!isPasswordValid) {
             return res.status(401).json({ error: 'Email ou mot de passe incorrect.' });

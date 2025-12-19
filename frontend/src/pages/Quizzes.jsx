@@ -40,7 +40,6 @@ const Quizzes = () => {
         </h1>
       </div>
 
-      {/* Filters Block – bien aligné */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 mb-8 flex flex-wrap gap-4 items-end">
         <div className="flex-1 min-w-[250px]">
           <label className="block text-xs font-bold text-gray-400 uppercase mb-2 ml-1">
@@ -83,7 +82,7 @@ const Quizzes = () => {
         </button>
       </div>
 
-      {/* Quiz List – grille bien alignée */}
+      {/* list quiz*/}
       {loading ? (
         <div className="flex justify-center py-20">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>

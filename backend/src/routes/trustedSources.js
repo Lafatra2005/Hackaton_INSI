@@ -5,7 +5,6 @@ import { validateTrustedSource } from '../middleware/validation.js';
 
 const router = express.Router();
 
-// Routes publiques
 router.get('/', async (req, res) => {
     try {
         const { category, country, language } = req.query;
