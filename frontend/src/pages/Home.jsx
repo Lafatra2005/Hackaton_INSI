@@ -28,7 +28,7 @@ const Home = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const API_URL = import.meta.env.VITE_API_URL || '/api';
         const response = await axios.get(`${API_URL}/stats`);
         if (response.data.success) {
           const { analyses, users, sources } = response.data.stats;
