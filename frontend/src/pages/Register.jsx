@@ -55,7 +55,7 @@ const Register = () => {
             <ShieldCheck className="h-12 w-12 text-primary-600" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Rejoindre Education AI
+            Rejoindre Education
           </h2>
           <p className="text-gray-600">
             Créez votre compte et commencez votre apprentissage

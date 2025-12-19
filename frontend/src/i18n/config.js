@@ -20,7 +20,7 @@ const resources = {
         register: "S'inscrire"
       },
       header: {
-        title: 'Education AI',
+        title: 'Education',
         subtitle: 'Lutter contre la désinformation'
       },
       home: {
@@ -89,7 +89,7 @@ const resources = {
       },
       about: {
         hero: {
-          title: 'À propos d\'Education AI',
+          title: 'À propos d\'Education',
           subtitle: 'Jeunesse, Intelligence Artificielle et Numérique pour une éducation critique, inclusive et responsable en Afrique'
         },
         mission: {
@@ -325,7 +325,6 @@ const resources = {
           notificationsValue: 'Activées',
           privacy: 'Confidentialité',
           privacyValue: 'Paramètres de confidentialité',
-          modify: 'Modifier'
         },
         roles: {
           admin: 'Administrateur',
@@ -355,7 +354,6 @@ const resources = {
           api: 'Documentation API',
           blog: 'Blog'
         },
-        copyright: '© 2024 Education AI Platform. Conçu pour le Hackathon INSI.',
         madeWithLove: 'Fait avec passion pour l\'éducation en Afrique',
         sdg: {
           title: 'Objectifs de Développement Durable :',
@@ -381,7 +379,7 @@ const resources = {
         register: 'Register'
       },
       header: {
-        title: 'Education AI',
+        title: 'Education',
         subtitle: 'Fight against disinformation'
       },
       home: {
@@ -450,7 +448,7 @@ const resources = {
       },
       about: {
         hero: {
-          title: 'About Education AI',
+          title: 'About Education',
           subtitle: 'Youth, Artificial Intelligence and Digital for Critical, Inclusive and Responsible Education in Africa'
         },
         mission: {
@@ -716,7 +714,6 @@ const resources = {
           api: 'API Documentation',
           blog: 'Blog'
         },
-        copyright: '© 2024 Education AI Platform. Designed for the INSI Hackathon.',
         madeWithLove: 'Made with passion for education in Africa',
         sdg: {
           title: 'Sustainable Development Goals:',
@@ -742,7 +739,7 @@ const resources = {
         register: 'Hisoratra'
       },
       header: {
-        title: 'Education AI',
+        title: 'Education',
         subtitle: 'Miady amin ny disinformation'
       },
       home: {
@@ -811,7 +808,7 @@ const resources = {
       },
       about: {
         hero: {
-          title: 'Momba an\'i Education AI',
+          title: 'Momba an\'i Education',
           subtitle: 'Tanora, AI nomerika sy Fampianarana manan-danja, anisan’ny, ary tompon’andraikitra any Afrika'
         },
         mission: {
@@ -1077,7 +1074,6 @@ const resources = {
           api: 'API Documentation',
           blog: 'Blog'
         },
-        copyright: '© 2024 Education AI Platform. Designed for the INSI Hackathon.',
         madeWithLove: 'Made with passion for education in Africa',
         sdg: {
           title: 'Sustainable Development Goals:',

@@ -47,8 +47,7 @@ const Profile = () => {
   };
 
   const countries = [
-    'Madagascar', 'France', 'Belgique', 'Canada', 'Suisse',
-    'Côte d\'Ivoire', 'Sénégal', 'Burkina Faso', 'Mali', 'Niger',
+    'Madagascar', 'Belgique','Côte d\'Ivoire', 'Sénégal', 'Burkina Faso', 'Mali', 'Niger',
     'Tchad', 'Cameroun', 'Gabon', 'Congo', 'RDC',
     'Burundi', 'Rwanda', 'Togo', 'Bénin', 'Guinée'
   ];
@@ -77,7 +76,7 @@ const Profile = () => {
                 <h2 className="text-xl font-semibold text-gray-900">
                   {user?.fullName || user?.username}
                 </h2>
-                <p className="text-gray-600">{t(`profile.roles.${user?.role}`)}</p>
+               
               </div>
 
               <div className="space-y-3 text-left">
@@ -94,10 +93,6 @@ const Profile = () => {
                 <div className="flex items-center text-sm text-gray-600">
                   <Calendar className="h-4 w-4 mr-2" />
                   {t('profile.registeredOn')} {new Date(user?.createdAt).toLocaleDateString()}
-                </div>
-                <div className="flex items-center text-sm text-gray-600">
-                  <Award className="h-4 w-4 mr-2" />
-                  {t(`profile.roles.${user?.role}`)}
                 </div>
               </div>
 
@@ -294,9 +289,6 @@ const Profile = () => {
                     <h4 className="font-medium text-gray-900">{t('profile.accountSettings.language')}</h4>
                     <p className="text-sm text-gray-600">{t('profile.accountSettings.languageValue')}</p>
                   </div>
-                  <button className="btn btn-ghost text-sm">
-                    {t('profile.accountSettings.modify')}
-                  </button>
                 </div>
                 
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -304,9 +296,6 @@ const Profile = () => {
                     <h4 className="font-medium text-gray-900">{t('profile.accountSettings.notifications')}</h4>
                     <p className="text-sm text-gray-600">{t('profile.accountSettings.notificationsValue')}</p>
                   </div>
-                  <button className="btn btn-ghost text-sm">
-                    {t('profile.accountSettings.modify')}
-                  </button>
                 </div>
                 
                 <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -314,9 +303,6 @@ const Profile = () => {
                     <h4 className="font-medium text-gray-900">{t('profile.accountSettings.privacy')}</h4>
                     <p className="text-sm text-gray-600">{t('profile.accountSettings.privacyValue')}</p>
                   </div>
-                  <button className="btn btn-ghost text-sm">
-                    {t('profile.accountSettings.modify')}
-                  </button>
                 </div>
               </div>
             </div>

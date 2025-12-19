@@ -38,7 +38,7 @@ const Login = () => {
             <ShieldCheck className="h-12 w-12 text-primary-600" />
           </div>
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
-            Connexion à Education AI
+            Connexion à Education
           </h2>
           <p className="text-gray-600">
             Accédez à votre espace d'apprentissage

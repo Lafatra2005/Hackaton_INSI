@@ -68,7 +68,7 @@ app.use('/api/trusted-sources', trustedSourceRoutes);
 app.get('/api/health', (req, res) => {
     res.json({
         success: true,
-        message: 'Education AI Platform API is running!',
+        message: 'Education Platform API is running!',
         timestamp: new Date().toISOString(),
         version: '1.0.0'
     });
