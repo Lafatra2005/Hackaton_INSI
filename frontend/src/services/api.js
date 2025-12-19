@@ -17,6 +17,14 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Add current language to quiz requests
+    if (config.url?.includes('/quizzes')) {
+      const currentLang = localStorage.getItem('i18nextLng') || 'fr';
+      const lang = currentLang.split('-')[0]; // Extract 'fr' from 'fr-FR'
+      config.params = { ...config.params, lang };
+    }
+
     return config;
   },
   (error) => {

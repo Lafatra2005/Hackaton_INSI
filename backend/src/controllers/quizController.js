@@ -4,8 +4,11 @@ export const getQuizById = async (req, res) => {
     try {
         const { id } = req.params;
         const { difficulty } = req.query;
-        // Pass userId to enable session caching
-        const quiz = await Quiz.findById(id, difficulty, req.user ? req.user.id : null);
+        // Detect language from query or header (frontend sends via i18next)
+        const lang = req.query.lang || req.headers['accept-language']?.split(',')[0]?.split('-')[0] || 'fr';
+
+        // Pass userId to enable session caching and lang for translation
+        const quiz = await Quiz.findById(id, difficulty, req.user ? req.user.id : null, lang);
 
         if (!quiz) {
             return res.status(404).json({ error: 'Quiz introuvable' });
@@ -19,7 +22,9 @@ export const getQuizById = async (req, res) => {
 
 export const getAllQuizzes = async (req, res) => {
     try {
-        const quizzes = await Quiz.findAll(req.query);
+        // Detect language for quiz titles
+        const lang = req.query.lang || req.headers['accept-language']?.split(',')[0]?.split('-')[0] || 'fr';
+        const quizzes = await Quiz.findAll({ ...req.query, lang });
         res.json({ success: true, quizzes });
     } catch (e) { res.status(500).json({ error: 'Erreur.' }); }
 };
