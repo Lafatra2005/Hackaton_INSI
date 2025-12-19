@@ -1,4 +1,3 @@
-// src/pages/Analysis.jsx
 import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -13,7 +12,7 @@ import {
   TrendingUp,
   Eye,
   EyeOff,
-  Mic,
+  Image,
   Video,
   Upload,
   X
@@ -47,7 +46,7 @@ const Analysis = () => {
   const handleAnalyze = async () => {
     if (contentType === 'text' && !contentText.trim()) return toast.error(t('analysis.error.noText'));
     if (contentType === 'url' && !contentUrl.trim()) return toast.error(t('analysis.error.noUrl'));
-    if ((contentType === 'audio' || contentType === 'video') && !selectedFile && !contentUrl.trim()) {
+    if ((contentType === 'image' || contentType === 'video') && !selectedFile && !contentUrl.trim()) {
       return toast.error(t('analysis.error.noFileOrUrl'));
     }
 
@@ -55,7 +54,7 @@ const Analysis = () => {
     try {
       let response;
       
-      if (selectedFile && (contentType === 'audio' || contentType === 'video')) {
+      if (selectedFile && (contentType === 'image' || contentType === 'video')) {
         const formData = new FormData();
         formData.append('file', selectedFile);
         formData.append('type', contentType);
@@ -64,7 +63,7 @@ const Analysis = () => {
         response = await analysisAPI.analyzeContent({
           contentType,
           contentText: contentType === 'text' ? contentText : undefined,
-          contentUrl: (contentType === 'url' || contentType === 'audio' || contentType === 'video') ? contentUrl : undefined,
+          contentUrl: (contentType === 'url' || contentType === 'image' || contentType === 'video') ? contentUrl : undefined,
         });
       }
 
@@ -120,7 +119,7 @@ const Analysis = () => {
                 {[
                   { id: 'text', icon: FileText, label: t('analysis.types.text') },
                   { id: 'url', icon: Link2, label: t('analysis.types.url') },
-                  { id: 'audio', icon: Mic, label: t('analysis.types.audio') },
+                  { id: 'image', icon: Image, label: t('analysis.types.image') },
                   { id: 'video', icon: Video, label: t('analysis.types.video') }
                 ].map((type) => (
                   <button
@@ -157,7 +156,7 @@ const Analysis = () => {
                 </div>
               )}
 
-              {(contentType === 'url' || contentType === 'audio' || contentType === 'video') && (
+              {(contentType === 'url' || contentType === 'image' || contentType === 'video') && (
                 <div>
                   <label className="label">{t('analysis.urlLabel')} {contentType !== 'url' && `(${t('analysis.types.' + contentType)})`}</label>
                   <input
@@ -170,7 +169,7 @@ const Analysis = () => {
                 </div>
               )}
 
-              {(contentType === 'audio' || contentType === 'video') && (
+              {(contentType === 'image' || contentType === 'video') && (
                 <div className="relative">
                   <div className="flex items-center my-4">
                     <div className="flex-grow border-t border-gray-200"></div>
@@ -192,7 +191,7 @@ const Analysis = () => {
                   ) : (
                     <div className="flex items-center justify-between p-3 bg-primary-50 rounded-lg border border-primary-200">
                       <div className="flex items-center">
-                        {contentType === 'audio' ? <Mic className="h-5 w-5 text-primary-600 mr-2" /> : <Video className="h-5 w-5 text-primary-600 mr-2" />}
+                        {contentType === 'image' ? <Image className="h-5 w-5 text-primary-600 mr-2" /> : <Video className="h-5 w-5 text-primary-600 mr-2" />}
                         <span className="text-sm font-medium truncate max-w-[200px]">{selectedFile.name}</span>
                       </div>
                       <button onClick={() => setSelectedFile(null)} className="p-1 hover:bg-primary-100 rounded">
@@ -204,7 +203,7 @@ const Analysis = () => {
                     type="file" 
                     ref={fileInputRef} 
                     className="hidden" 
-                    accept={contentType === 'audio' ? "audio/*" : "video/*"}
+                    accept={contentType === 'image' ? "image/*" : "video/*"}
                     onChange={handleFileChange}
                   />
                 </div>
@@ -250,56 +249,75 @@ const Analysis = () => {
                   <p className="text-sm">{analysisResult.explanation}</p>
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <div className="flex items-center text-sm text-gray-600 mb-1">
-                      <TrendingUp className="h-4 w-4 mr-1" />
-                      {t('analysis.confidenceScore')}
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900">
-                      {Math.round(analysisResult.confidence_score * 100)}%
-                    </div>
-                  </div>
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <div className="flex items-center text-sm text-gray-600 mb-1">
-                      <Clock className="h-4 w-4 mr-1" />
-                      {t('analysis.analysisTime')}
-                    </div>
-                    <div className="text-2xl font-bold text-gray-900">
-                      {analysisResult.analysis_time_ms}ms
-                    </div>
-                  </div>
-                </div>
-
+                {/* Enhanced Details Section - Always show key info */}
                 {analysisResult.details && (
-                  <div>
+                  <div className="space-y-4">
+                    {/* Detected Issues */}
+                    {analysisResult.details.issues_detected && analysisResult.details.issues_detected.length > 0 && (
+                      <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+                        <div className="flex items-center mb-2">
+                          <AlertTriangle className="h-5 w-5 text-orange-600 mr-2" />
+                          <strong className="text-orange-900">{t('analysis.detectedIssues')}</strong>
+                        </div>
+                        <ul className="list-disc list-inside text-sm text-orange-800 space-y-1">
+                          {analysisResult.details.issues_detected.map((issue, i) => (
+                            <li key={i}>{issue}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Recommendations */}
+                    {analysisResult.details.recommendations && (
+                      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        <div className="flex items-center mb-2">
+                          <CheckCircle className="h-5 w-5 text-blue-600 mr-2" />
+                          <strong className="text-blue-900">{t('analysis.recommendations')}</strong>
+                        </div>
+                        <p className="text-sm text-blue-800">{analysisResult.details.recommendations}</p>
+                      </div>
+                    )}
+
+                    {/* Source Reliability - Only if comes from a trusted source */}
+                    {analysisResult.details.source_reliability && analysisResult.details.source_reliability > 0.7 && (
+                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <div className="flex items-center mb-2">
+                          <ShieldCheck className="h-5 w-5 text-green-600 mr-2" />
+                          <strong className="text-green-900">{t('analysis.sourceReliability')}</strong>
+                        </div>
+                        <p className="text-sm text-green-800">
+                          Cette information provient d'une source fiable.
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Advanced Details Toggle */}
                     <button
                       onClick={() => setShowDetails(!showDetails)}
-                      className="flex items-center space-x-2 text-sm text-primary-600 hover:text-primary-700 mb-2"
+                      className="flex items-center space-x-2 text-sm text-primary-600 hover:text-primary-700"
                     >
                       {showDetails ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      <span>{showDetails ? t('analysis.hideDetails') : t('analysis.showDetails')}</span>
+                      <span>{showDetails ? 'Masquer les détails techniques' : 'Afficher les détails techniques'}</span>
                     </button>
                     
                     {showDetails && (
                       <div className="bg-gray-50 p-4 rounded-lg text-sm text-gray-700 space-y-2">
-                        <p><strong>{t('analysis.detectedIssues')}:</strong> {analysisResult.details.issues_detected.join(', ')}</p>
-                        <p><strong>{t('analysis.recommendations')}:</strong> {analysisResult.details.recommendations}</p>
+                        <p><strong>Analyse technique :</strong></p>
                         {analysisResult.details.source_reliability && (
-                          <p><strong>{t('analysis.sourceReliability')}:</strong> {Math.round(analysisResult.details.source_reliability * 100)}%</p>
+                          <p>• Score de source : {Math.round(analysisResult.details.source_reliability * 100)}%</p>
+                        )}
+                        {analysisResult.factors && (
+                          <div>
+                            <p><strong>Facteurs analysés :</strong></p>
+                            <ul className="list-disc list-inside ml-4 mt-1">
+                              {Object.entries(analysisResult.factors).map(([key, value]) => (
+                                <li key={key}>{key}: {typeof value === 'number' ? Math.round(value * 100) + '%' : value}</li>
+                              ))}
+                            </ul>
+                          </div>
                         )}
                       </div>
                     )}
-                  </div>
-                )}
-
-                {analysisResult.verdict === 'faux' && (
-                  <div className="bg-danger-50 border border-danger-200 rounded-lg p-4">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <ShieldCheck className="h-5 w-5 text-danger-600" />
-                      <span className="font-medium text-danger-800">{t('analysis.safetyWarning')}</span>
-                    </div>
-                    <p className="text-sm text-danger-700">{t('analysis.fakeContentWarning')}</p>
                   </div>
                 )}
               </div>

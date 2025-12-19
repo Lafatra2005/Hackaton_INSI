@@ -1,5 +1,5 @@
 // src/pages/Home.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -14,10 +14,37 @@ import {
   Award
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
 
 const Home = () => {
   const { t, i18n } = useTranslation();
   const { isAuthenticated } = useAuth();
+  const [stats, setStats] = useState([
+    { number: '...', label: t('home.stats.analyses'), icon: TrendingUp },
+    { number: '...', label: t('home.stats.users'), icon: Users },
+    { number: '...', label: t('home.stats.sources'), icon: ShieldCheck }
+  ]);
+
+  useEffect(() => {
+    // Fetch real stats from API
+    const fetchStats = async () => {
+      try {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const response = await axios.get(`${API_URL}/stats`);
+        if (response.data.success) {
+          const { analyses, users, sources } = response.data.stats;
+          setStats([
+            { number: analyses.toLocaleString(), label: t('home.stats.analyses'), icon: TrendingUp },
+            { number: users.toLocaleString(), label: t('home.stats.users'), icon: Users },
+            { number: sources.toLocaleString(), label: t('home.stats.sources'), icon: ShieldCheck }
+          ]);
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
+    fetchStats();
+  }, [t]);
 
   const features = [
     {
@@ -48,13 +75,6 @@ const Home = () => {
       color: 'text-secondary-600',
       bgColor: 'bg-secondary-50'
     }
-  ];
-
-  const stats = [
-    { number: '10K+', label: t('home.stats.analyses'), icon: TrendingUp },
-    { number: '5K+', label: t('home.stats.users'), icon: Users },
-    { number: '50+', label: t('home.stats.sources'), icon: ShieldCheck },
-    { number: '15+', label: t('home.stats.countries'), icon: Globe }
   ];
 
   const challenges = [
@@ -163,7 +183,7 @@ const Home = () => {
       {/* Stats Section */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {stats.map((stat, index) => (
               <div key={index} className="text-center">
                 <div className="flex items-center justify-center mb-2">

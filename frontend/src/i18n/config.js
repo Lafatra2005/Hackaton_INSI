@@ -225,7 +225,7 @@ const resources = {
         types: {
           text: 'Texte',
           url: 'Lien',
-          audio: 'Audio',
+          image: 'Image',
           video: 'Vidéo'
         },
         textLabel: 'Texte à analyser',
@@ -584,7 +584,7 @@ const resources = {
         types: {
           text: 'Text',
           url: 'Link',
-          audio: 'Audio',
+          image: 'Image',
           video: 'Video'
         },
         textLabel: 'Text to analyze',
@@ -940,12 +940,12 @@ const resources = {
       analysis: {
         title: 'Fanadihadiana AI Multi-endrika',
         subtitle: 'Fantaro ny deepfake, fake news sy ny fanovana amin’ny lahatsoratra, sary, feo ary horonan-tsary.',
-        inputTitle: 'Votoaty hodinihina',
+        inputTitle: 'Votoaty hamarinina',
         types: {
-          text: 'Lahatsoratra',
-          url: 'Rohy',
-          audio: 'Feo',
-          video: 'Horonan-tsary'
+          text: 'Soratra',
+          url: 'Lien',
+          image: 'Sary',
+          video: 'Horonantsary'
         },
         textLabel: 'Lahatsoratra hodinihina',
         textPlaceholder: 'Apetraho eto ny lahatsoratra...',

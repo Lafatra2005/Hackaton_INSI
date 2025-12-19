@@ -6,25 +6,21 @@ const decodeHTML = (html) => {
     return html.replace(/&quot;|&#039;|&amp;|&lt;|&gt;|&rsquo;|&ldquo;|&rdquo;/g, m => map[m]);
 };
 
-// Translation function using LibreTranslate API
+// Translation using MyMemory API (10k requests/day - more reliable)
 const translateText = async (text, targetLang) => {
     if (!text || targetLang === 'en') return text;
 
     try {
-        const response = await fetch('https://libretranslate.com/translate', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                q: text,
-                source: 'en',
-                target: targetLang === 'mg' ? 'mg' : 'fr',
-                format: 'text'
-            })
-        });
+        const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${targetLang}`;
+        const response = await fetch(url);
         const data = await response.json();
-        return data.translatedText || text;
+
+        if (data.responseData && data.responseData.translatedText) {
+            return data.responseData.translatedText;
+        }
+        return text;
     } catch (e) {
-        console.warn(`Translation failed for "${text.substring(0, 30)}...", using original`);
+        console.warn(`Translation failed, using original`);
         return text;
     }
 };
@@ -33,20 +29,19 @@ const translateText = async (text, targetLang) => {
 const translateQuiz = async (quiz, lang) => {
     if (!quiz || !lang || lang === 'en') return quiz;
 
-    console.log(`[Quiz] Translating quiz to ${lang}...`);
+    console.log(`[Quiz] Translating to ${lang}...`);
     const translatedQuestions = [];
 
     for (const q of quiz.questions) {
-        const translatedQuestion = {
+        const translatedQ = {
             ...q,
             question_text: await translateText(q.question_text, lang),
             options: await Promise.all(q.options.map(opt => translateText(opt, lang)))
         };
-        // Keep correct_answer untranslated for comparison if it exists
         if (q.correct_answer) {
-            translatedQuestion.correct_answer = await translateText(q.correct_answer, lang);
+            translatedQ.correct_answer = await translateText(q.correct_answer, lang);
         }
-        translatedQuestions.push(translatedQuestion);
+        translatedQuestions.push(translatedQ);
     }
 
     return {
@@ -64,7 +59,7 @@ class Quiz {
         const difficulty = filters.difficulty || 'intermediaire';
         const lang = filters.lang || 'fr';
 
-        // Quiz titles based on language
+        // Quiz titles based on language (ignore category filter - not compatible with OpenTDB)
         const titles = {
             fr: [
                 { id: 18, title: "Informatique & Tech", description: "Testez vos connaissances en informatique." },
@@ -96,17 +91,15 @@ class Quiz {
         return langTitles.map(item => ({ ...item, questions_count: 10, difficulty }));
     }
 
-    static async findById(id, difficulty = 'hard', userId = null, lang = 'fr') { // Default to hard for 16+
+    static async findById(id, difficulty = 'hard', userId = null, lang = 'fr') {
         try {
-            console.log(`[Quiz] Fetching quiz ${id} with difficulty ${difficulty} for user ${userId}, lang: ${lang}`);
+            console.log(`[Quiz] Fetching quiz ${id} for user ${userId}`);
 
-            // ANTI-RATE-LIMIT: Check if we already have a session for this user with this quiz
+            // Check cache first
             if (userId) {
                 const existingSession = activeSessions.get(String(userId));
                 if (existingSession && existingSession.quizId === id) {
-                    console.log(`[Quiz] Returning CACHED session for user ${userId} (Quiz ${id})`);
-
-                    // Return cached version (already has correct_answer for verification)
+                    console.log(`[Quiz] Returning CACHED session`);
                     const userQuestions = existingSession.questions.map(q => ({
                         id: q.id,
                         question_text: q.question_text,
@@ -120,33 +113,29 @@ class Quiz {
                 }
             }
 
-            // Map difficulty to API format
             const diffMap = { 'debutant': 'easy', 'intermediaire': 'medium', 'avance': 'hard' };
             const apiDiff = diffMap[difficulty] || difficulty || 'hard';
 
             // Fetch from OpenTDB
             const apiUrl = `https://opentdb.com/api.php?amount=10&category=${id}&difficulty=${apiDiff}&type=multiple`;
-            console.log(`[Quiz] API URL: ${apiUrl}`);
             const response = await fetch(apiUrl);
             const data = await response.json();
 
-            let questions = [];
-
-            if (data.results && data.results.length > 0) {
-                console.log(`[Quiz] Got ${data.results.length} questions for category ${data.results[0].category}`);
-                questions = data.results.map((q, i) => ({
-                    id: i + 1,
-                    question_text: decodeHTML(q.question),
-                    options: [...q.incorrect_answers, q.correct_answer]
-                        .map(o => decodeHTML(o))
-                        .sort(() => Math.random() - 0.5),
-                    correct_answer: decodeHTML(q.correct_answer),
-                    explanation: `Category: ${decodeHTML(q.category)}`
-                }));
-            } else {
-                console.warn(`[Quiz] API returned no results for category ${id}. Response code: ${data.response_code}`);
+            if (!data.results || data.results.length === 0) {
+                console.warn(`[Quiz] API failed (code: ${data.response_code}), using fallback`);
                 return this.getFallbackQuiz(id, lang);
             }
+
+            console.log(`[Quiz] Got ${data.results.length} questions`);
+            const questions = data.results.map((q, i) => ({
+                id: i + 1,
+                question_text: decodeHTML(q.question),
+                options: [...q.incorrect_answers, q.correct_answer]
+                    .map(o => decodeHTML(o))
+                    .sort(() => Math.random() - 0.5),
+                correct_answer: decodeHTML(q.correct_answer),
+                explanation: `Category: ${decodeHTML(q.category)}`
+            }));
 
             let quiz = {
                 id,
@@ -154,23 +143,23 @@ class Quiz {
                 questions: questions
             };
 
-            // Translate if needed
+            // Translate if needed (FR or MG)
             if (lang && lang !== 'en') {
+                console.log(`[Quiz] Translating quiz to ${lang}...`);
                 quiz = await translateQuiz(quiz, lang);
             }
 
-            // Store TRANSLATED version in Session Cache
+            // Store TRANSLATED version in cache
             if (userId) {
-                console.log(`[Quiz] Storing NEW session for user ${userId} (Quiz ${id}, lang: ${lang})`);
+                console.log(`[Quiz] Storing translated session`);
                 activeSessions.set(String(userId), {
                     quizId: id,
                     timestamp: Date.now(),
                     title: quiz.title,
-                    questions: quiz.questions // Store with correct_answer for verification
+                    questions: quiz.questions
                 });
             }
 
-            // Return without correct_answer to frontend
             const userQuestions = quiz.questions.map(q => ({
                 id: q.id,
                 question_text: q.question_text,

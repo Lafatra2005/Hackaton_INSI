@@ -1,5 +1,5 @@
 // src/pages/Profile.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
 import {
@@ -14,12 +14,37 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../contexts/AuthContext';
+import axios from 'axios';
 
 const Profile = () => {
   const { t } = useTranslation();
   const { user, updateProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [stats, setStats] = useState({
+    analysesCount: 0,
+    quizzesCount: 0,
+    averageScore: 0
+  });
+
+  useEffect(() => {
+    // Fetch user stats
+    const fetchStats = async () => {
+      try {
+        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${API_URL}/auth/stats`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.data.success) {
+          setStats(response.data.stats);
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    };
+    fetchStats();
+  }, []);
 
   const {
     register,
@@ -117,19 +142,15 @@ const Profile = () => {
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">{t('profile.stats.analyses')}</span>
-                  <span className="text-sm font-medium text-gray-900">0</span>
+                  <span className="text-sm font-medium text-gray-900">{stats.analysesCount}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">{t('profile.stats.quizzes')}</span>
-                  <span className="text-sm font-medium text-gray-900">0</span>
+                  <span className="text-sm font-medium text-gray-900">{stats.quizzesCount}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">{t('profile.stats.averageScore')}</span>
-                  <span className="text-sm font-medium text-gray-900">0%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">{t('profile.stats.streak')}</span>
-                  <span className="text-sm font-medium text-gray-900">0</span>
+                  <span className="text-sm font-medium text-gray-900">{stats.averageScore}%</span>
                 </div>
               </div>
             </div>

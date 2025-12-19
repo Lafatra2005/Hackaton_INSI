@@ -11,6 +11,7 @@ import authRoutes from './src/routes/auth.js';
 import analysisRoutes from './src/routes/analysis.js';
 import quizRoutes from './src/routes/quizzes.js';
 import trustedSourceRoutes from './src/routes/trustedSources.js';
+import statsRoutes from './src/routes/stats.js';
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -63,6 +64,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/analysis', analysisRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/api/trusted-sources', trustedSourceRoutes);
+app.use('/api/stats', statsRoutes);
 
 // Route de test
 app.get('/api/health', (req, res) => {
@@ -101,7 +103,7 @@ app.use('/api/*', (req, res) => {
 // Gestion globale des erreurs
 app.use((err, req, res, next) => {
     console.error('Erreur non gérée:', err);
-    res.status(500).json({ 
+    res.status(500).json({
         error: 'Erreur serveur interne.',
         details: process.env.NODE_ENV === 'development' ? err.message : undefined
     });

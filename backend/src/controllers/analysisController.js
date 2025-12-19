@@ -10,6 +10,9 @@ export const analyzeContent = async (req, res) => {
 
         if (contentType === 'url' && contentUrl) {
             analysisResult = await AIAnalysisService.analyzeURL(contentUrl);
+        } else if (contentType === 'video' && contentUrl) {
+            // Treat video URLs like regular URLs (analyze the page content)
+            analysisResult = await AIAnalysisService.analyzeURL(contentUrl);
         } else if (contentType === 'text' && contentText) {
             analysisResult = await AIAnalysisService.analyzeText(contentText);
         } else if (contentType === 'image' && contentUrl) {

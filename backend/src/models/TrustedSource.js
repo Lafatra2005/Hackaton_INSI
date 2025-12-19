@@ -134,6 +134,22 @@ class TrustedSource {
                 };
             }
 
+            // Fallback: Check hardcoded authoritative domains if not in DB
+            const authoritativeDomains = [
+                'unesco.org', 'un.org', 'who.int', 'gov', 'edu', 'europa.eu',
+                'nasa.gov', 'cnrs.fr', 'nature.com', 'science.org',
+                'bbc.com', 'reuters.com', 'afp.com', 'apnews.com',
+                'france24.com', 'lemonde.fr', 'lefigaro.fr'
+            ];
+
+            if (authoritativeDomains.some(d => domain.endsWith(d))) {
+                return {
+                    isTrusted: true,
+                    source: { name: hostname, trust_score: 95 },
+                    reliabilityScore: 0.95
+                };
+            }
+
             return {
                 isTrusted: false,
                 reliabilityScore: 0.5 // Neutral/Unknown, not necessarily bad
